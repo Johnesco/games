@@ -374,8 +374,6 @@ span.token.punctuation:hover:not(.blocked):not(.faded) {
 }
 
 /* Secondary action buttons - neutral muted gradient */
-.btn.save,
-.btn.load,
 .btn.export,
 .btn.import,
 .btn.image,
@@ -385,8 +383,6 @@ span.token.punctuation:hover:not(.blocked):not(.faded) {
   border-color: #b0aba2;
 }
 
-.btn.save:hover,
-.btn.load:hover,
 .btn.export:hover,
 .btn.import:hover,
 .btn.image:hover,

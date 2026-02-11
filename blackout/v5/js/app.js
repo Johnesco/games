@@ -36,23 +36,16 @@ const storyInput = document.getElementById('story-input');
 const btnBlockout = document.getElementById('btn-blockout');
 const btnClear = document.getElementById('btn-clear');
 const btnReset = document.getElementById('btn-reset');
-const btnSave = document.getElementById('btn-save');
-const btnLoad = document.getElementById('btn-load');
 const btnExport = document.getElementById('btn-export');
 const btnImport = document.getElementById('btn-import');
 const btnImage = document.getElementById('btn-image');
 const btnShare = document.getElementById('btn-share');
-const savePanel = document.getElementById('save-panel');
-const loadPanel = document.getElementById('load-panel');
-const saveName = document.getElementById('save-name');
-const saveConfirm = document.getElementById('save-confirm');
-const savedList = document.getElementById('saved-list');
 const fileInput = document.getElementById('file-input');
 const toastEl = document.getElementById('toast');
 const sharedBanner = document.getElementById('shared-banner');
 const bannerDismiss = document.getElementById('banner-dismiss');
 
-const STORAGE_KEY = 'blackout-poems';
+const AUTOSAVE_KEY = 'blackout-autosave';
 
 /**
  * Tokenize text into words, punctuation, and spaces
@@ -133,6 +126,7 @@ function handleTokenClick(e) {
   target.classList.toggle('marked');
 
   updatePoem();
+  autoSave();
 }
 
 /**
@@ -172,6 +166,7 @@ function toggleBlockout() {
           setTimeout(() => {
             blockoutInProgress = false;
             btnBlockout.disabled = false;
+            autoSave();
           }, 200);
         }
       }, delay);
@@ -196,6 +191,7 @@ function toggleBlockout() {
           setTimeout(() => {
             blockoutInProgress = false;
             btnBlockout.disabled = false;
+            autoSave();
           }, 200);
         }
       }, delay);
@@ -213,6 +209,7 @@ function clearMarked() {
     span.classList.remove('marked', 'animate-in', 'animate-out');
   });
   poemEl.textContent = '(your poem appears here)';
+  autoSave();
 }
 
 /**
@@ -227,6 +224,7 @@ function resetAll() {
   blockedOut = false;
   blockoutInProgress = false;
   btnBlockout.disabled = false;
+  autoSave();
 }
 
 /**
@@ -242,6 +240,7 @@ function handleSubmit(e) {
     blockoutInProgress = false;
     btnBlockout.disabled = false;
     poemEl.textContent = '(your poem appears here)';
+    autoSave();
   }
 }
 
@@ -328,95 +327,25 @@ function showToast(msg, duration) {
 }
 
 // ──────────────────────────────────────
-// Panel toggle
+// Auto-save to localStorage
 // ──────────────────────────────────────
 
-function togglePanel(panel) {
-  const isOpen = panel.classList.contains('open');
-  // Close all panels first
-  savePanel.classList.remove('open');
-  loadPanel.classList.remove('open');
-  if (!isOpen) {
-    panel.classList.add('open');
-  }
-}
-
-// ──────────────────────────────────────
-// Feature 1: localStorage Save/Load
-// ──────────────────────────────────────
-
-function getSavedPoems() {
+function autoSave() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(serializeState()));
+  } catch (_) {}
+}
+
+function autoRestore() {
+  try {
+    const raw = localStorage.getItem(AUTOSAVE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data.story || !Array.isArray(data.states)) return false;
+    deserializeState(data);
+    return true;
   } catch (_) {
-    return [];
-  }
-}
-
-function setSavedPoems(poems) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(poems));
-}
-
-function savePoem() {
-  const name = saveName.value.trim() || 'Untitled';
-  const data = serializeState();
-  const poems = getSavedPoems();
-  poems.push({
-    name: name,
-    date: new Date().toISOString(),
-    story: data.story,
-    states: data.states
-  });
-  setSavedPoems(poems);
-  saveName.value = '';
-  savePanel.classList.remove('open');
-  showToast('Poem saved');
-}
-
-function renderSavedList() {
-  const poems = getSavedPoems();
-  if (poems.length === 0) {
-    savedList.innerHTML = '<p class="empty-message">No saved poems yet.</p>';
-    return;
-  }
-  savedList.innerHTML = poems.map((p, i) => {
-    const date = new Date(p.date).toLocaleDateString();
-    return `<div class="saved-item">
-      <div class="saved-info">
-        <div class="saved-name">${escapeHtml(p.name)}</div>
-        <div class="saved-date">${date}</div>
-      </div>
-      <div class="saved-actions">
-        <button class="load-btn" data-index="${i}">Load</button>
-        <button class="delete-btn" data-index="${i}">Delete</button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function handleSavedListClick(e) {
-  const target = e.target;
-  const index = parseInt(target.dataset.index, 10);
-  if (isNaN(index)) return;
-
-  const poems = getSavedPoems();
-  if (target.classList.contains('load-btn')) {
-    if (poems[index]) {
-      deserializeState(poems[index]);
-      loadPanel.classList.remove('open');
-      showToast('Poem loaded');
-    }
-  } else if (target.classList.contains('delete-btn')) {
-    poems.splice(index, 1);
-    setSavedPoems(poems);
-    renderSavedList();
-    showToast('Poem deleted');
+    return false;
   }
 }
 
@@ -741,25 +670,6 @@ btnClear.addEventListener('click', clearMarked);
 btnReset.addEventListener('click', resetAll);
 storyForm.addEventListener('submit', handleSubmit);
 
-// Save/Load panel toggles
-btnSave.addEventListener('click', () => togglePanel(savePanel));
-btnLoad.addEventListener('click', () => {
-  renderSavedList();
-  togglePanel(loadPanel);
-});
-
-// Save confirm
-saveConfirm.addEventListener('click', savePoem);
-saveName.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    savePoem();
-  }
-});
-
-// Load/Delete from saved list
-savedList.addEventListener('click', handleSavedListClick);
-
 // JSON Export/Import
 btnExport.addEventListener('click', exportJSON);
 btnImport.addEventListener('click', () => fileInput.click());
@@ -786,10 +696,12 @@ bannerDismiss.addEventListener('click', () => {
 // ──────────────────────────────────────
 
 (async function init() {
-  // Try restoring from URL first
+  // Try restoring from URL first, then auto-save, then default
   const restored = await restoreFromURL();
   if (!restored) {
-    displayStory(defaultStory);
+    if (!autoRestore()) {
+      displayStory(defaultStory);
+    }
   }
   generateNoiseTexture();
 })();
