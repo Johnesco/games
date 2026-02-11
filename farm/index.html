@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Farmer's Heart - Interactive Story</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            max-height: 90vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 3px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 0.95em;
+            opacity: 0.95;
+            font-style: italic;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .story-node {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .node-title {
+            font-size: 1.8em;
+            color: #764ba2;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .node-text {
+            font-size: 1.05em;
+            line-height: 1.8;
+            color: #333;
+            margin-bottom: 30px;
+            text-align: justify;
+        }
+
+        .choices {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .choice-button {
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            font-family: 'Georgia', serif;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .choice-button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .choice-button:hover {
+            transform: translateX(10px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .choice-button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .choice-button:active {
+            transform: translateX(10px) scale(0.98);
+        }
+
+        .ending-message {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .ending-message.good {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .ending-message.bittersweet {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+
+        .ending-message.heroic {
+            background: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+        }
+
+        .restart-button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+            margin-top: 20px;
+            align-self: center;
+        }
+
+        .restart-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .footer {
+            background: #f5f5f5;
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            border-top: 1px solid #ddd;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #888;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        /* Scrollbar styling */
+        .content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .content::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        .content::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .node-title {
+                font-size: 1.4em;
+            }
+
+            .node-text {
+                font-size: 1em;
+            }
+
+            .choice-button {
+                padding: 12px 15px;
+                font-size: 0.95em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌾 A Farmer's Heart 🌾</h1>
+            <p>A Branching Adventure in Stardew Valley</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div class="content" id="content">
+            <!-- Story content will be loaded here -->
+        </div>
+
+        <div class="footer">
+            <div class="stats">
+                <div class="stat">
+                    <span class="stat-label">Nodes Visited</span>
+                    <span id="nodesVisited">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Choices Made</span>
+                    <span id="choicesMade">0</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Endings Available</span>
+                    <span id="endingsCount">6</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Story Engine
+        class StoryEngine {
+            constructor(storyData) {
+                this.storyData = storyData;
+                this.currentNodeId = storyData.metadata.startNode;
+                this.visitedNodes = new Set();
+                this.choicesMade = 0;
+                this.contentElement = document.getElementById('content');
+            }
+
+            getCurrentNode() {
+                return this.storyData.nodes[this.currentNodeId];
+            }
+
+            goToNode(nodeId) {
+                if (this.storyData.nodes[nodeId]) {
+                    this.currentNodeId = nodeId;
+                    this.visitedNodes.add(nodeId);
+                    this.choicesMade++;
+                    this.render();
+                    this.updateStats();
+                    this.updateProgress();
+                }
+            }
+
+            render() {
+                const node = this.getCurrentNode();
+                if (!node) return;
+
+                this.contentElement.innerHTML = '';
+
+                const storyNode = document.createElement('div');
+                storyNode.className = 'story-node';
+
+                // Add ending message if this is an ending
+                if (node.isEnding) {
+                    const endingMessage = document.createElement('div');
+                    endingMessage.className = `ending-message ${node.endingType}`;
+                    
+                    let endingText = '✨ THE END ✨';
+                    if (node.endingType === 'good') {
+                        endingText = '🌟 A Good Ending 🌟';
+                    } else if (node.endingType === 'peaceful') {
+                        endingText = '🏡 A Peaceful Ending 🏡';
+                    } else if (node.endingType === 'bittersweet') {
+                        endingText = '💫 A Bittersweet Ending 💫';
+                    } else if (node.endingType === 'heroic_sacrifice') {
+                        endingText = '⚔️ A Heroic Sacrifice ⚔️';
+                    } else if (node.endingType === 'sacrifice') {
+                        endingText = '🔗 A Sealed Sacrifice 🔗';
+                    }
+                    
+                    endingMessage.textContent = endingText;
+                    storyNode.appendChild(endingMessage);
+                }
+
+                // Title
+                const title = document.createElement('h2');
+                title.className = 'node-title';
+                title.textContent = node.title;
+                storyNode.appendChild(title);
+
+                // Text
+                const text = document.createElement('p');
+                text.className = 'node-text';
+                text.textContent = node.text;
+                storyNode.appendChild(text);
+
+                // Choices
+                if (node.choices && node.choices.length > 0) {
+                    const choicesContainer = document.createElement('div');
+                    choicesContainer.className = 'choices';
+
+                    node.choices.forEach(choice => {
+                        const button = document.createElement('button');
+                        button.className = 'choice-button';
+                        button.textContent = '→ ' + choice.text;
+                        button.onclick = () => this.goToNode(choice.nextNode);
+                        choicesContainer.appendChild(button);
+                    });
+
+                    storyNode.appendChild(choicesContainer);
+                } else if (node.isEnding) {
+                    // Add restart button for endings
+                    const restartBtn = document.createElement('button');
+                    restartBtn.className = 'restart-button';
+                    restartBtn.textContent = 'Start Over';
+                    restartBtn.onclick = () => this.restart();
+                    storyNode.appendChild(restartBtn);
+                }
+
+                this.contentElement.appendChild(storyNode);
+                this.contentElement.scrollTop = 0;
+            }
+
+            updateStats() {
+                document.getElementById('nodesVisited').textContent = this.visitedNodes.size;
+                document.getElementById('choicesMade').textContent = this.choicesMade;
+            }
+
+            updateProgress() {
+                const totalNodes = Object.keys(this.storyData.nodes).length;
+                const visited = this.visitedNodes.size;
+                const progress = (visited / totalNodes) * 100;
+                document.getElementById('progressBar').style.width = progress + '%';
+            }
+
+            restart() {
+                this.currentNodeId = this.storyData.metadata.startNode;
+                this.visitedNodes = new Set([this.storyData.metadata.startNode]);
+                this.choicesMade = 0;
+                this.render();
+                this.updateStats();
+                this.updateProgress();
+            }
+        }
+
+        // Initialize the story engine
+        let engine;
+
+        fetch('story-data.json')
+            .then(response => response.json())
+            .then(data => {
+                engine = new StoryEngine(data);
+                engine.visitedNodes.add(engine.currentNodeId);
+                engine.render();
+                engine.updateStats();
+                engine.updateProgress();
+            })
+            .catch(error => {
+                console.error('Error loading story:', error);
+                document.getElementById('content').innerHTML = 
+                    '<p style="color: red; padding: 20px;">Error loading story. Make sure story-data.json is in the same directory as index.html</p>';
+            });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const buttons = document.querySelectorAll('.choice-button');
+                if (buttons.length === 1) {
+                    buttons[0].click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

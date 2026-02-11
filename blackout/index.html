@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blackout Poetry - Version History</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+      background-color: #e8e4dd;
+      color: #2a2520;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 0.25rem;
+    }
+    .subtitle {
+      text-align: center;
+      color: #8a8279;
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+    }
+    .version {
+      background: #faf8f3;
+      border: 1px solid #e0dbd3;
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      transition: box-shadow 0.2s, transform 0.15s;
+    }
+    .version:hover {
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      transform: translateY(-1px);
+    }
+    .version-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+    }
+    .version-header a {
+      font-size: 1.15rem;
+      font-weight: bold;
+      color: #2a2520;
+      text-decoration: none;
+      border-bottom: 2px solid rgba(255, 230, 0, 0.5);
+      transition: border-color 0.2s;
+    }
+    .version-header a:hover {
+      border-bottom-color: rgba(255, 200, 0, 0.9);
+    }
+    .date {
+      font-size: 0.85rem;
+      color: #8a8279;
+      white-space: nowrap;
+    }
+    .description {
+      font-size: 0.95rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Blackout Poetry</h1>
+    <p class="subtitle">Version history</p>
+
+    <div class="version">
+      <div class="version-header">
+        <a href="ai-claude004/index.html">ai-claude004: Save, Export & Share</a>
+        <span class="date">Jan 31, 2026</span>
+      </div>
+      <p class="description">Save poems to localStorage, export/import as JSON, render to PNG image via canvas, and share via compressed URL. Inline save/load panels, toast notifications, and shared-poem banner.</p>
+    </div>
+
+    <div class="version">
+      <div class="version-header">
+        <a href="ai-claude003/index.html">ai-claude003: Visual Polish</a>
+        <span class="date">Jan 31, 2025</span>
+      </div>
+      <p class="description">Marker-on-paper aesthetic with warm parchment tones, serif typography, and SVG displacement filters for hand-drawn highlighter and blackout edges. Staggered left-to-right blockout animation with per-word jitter. Canvas-generated paper noise texture.</p>
+    </div>
+
+    <div class="version">
+      <div class="version-header">
+        <a href="ai-claude002/index.html">ai-claude002: Improved Tokenizer</a>
+        <span class="date">Jan 4, 2025</span>
+      </div>
+      <p class="description">Words and punctuation are independently clickable tokens. Regex-based tokenizer separates letters, punctuation marks, and whitespace for finer poem control.</p>
+    </div>
+
+    <div class="version">
+      <div class="version-header">
+        <a href="ai-claude001/index.html">ai-claude001: Vanilla JS Rewrite</a>
+        <span class="date">Jan 3, 2025</span>
+      </div>
+      <p class="description">Converted to vanilla JavaScript with no dependencies. Removed Bootstrap in favor of custom CSS grid layout.</p>
+    </div>
+
+    <div class="version">
+      <div class="version-header">
+        <a href="original/index.html">Original</a>
+        <span class="date">Mar 29, 2018</span>
+      </div>
+      <p class="description">The original Blackout Poetry JS app.</p>
+    </div>
+  </div>
+</body>
+</html>

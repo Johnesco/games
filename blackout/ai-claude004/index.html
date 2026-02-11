@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blackout Poetry - Save, Export & Share</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <!-- SVG filters for marker and highlighter textures -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="marker-texture">
+      <feTurbulence type="turbulence" baseFrequency="0.04 0.08" numOctaves="4" result="noise" seed="2"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <filter id="highlighter-texture">
+      <feTurbulence type="turbulence" baseFrequency="0.05 0.1" numOctaves="4" result="noise" seed="5"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </svg>
+
+  <div class="container">
+    <div class="shared-banner" id="shared-banner" style="display:none">
+      <span>Viewing a shared poem</span>
+      <button class="banner-dismiss" id="banner-dismiss">&times;</button>
+    </div>
+
+    <header>
+      <h1>Blackout Poetry</h1>
+    </header>
+
+    <section class="info">
+      <h3>Instructions:</h3>
+      <p>A blackout poem is made by selecting individual words from a longer story. In the Story Snippet below, clicking individual words marks them in yellow and adds them to your poem in the order they appear. "Block/Unblock unmarked words" will block out all words that are not marked in yellow. Use the existing story below or copy and paste your own story into the window below and hit submit.</p>
+    </section>
+
+    <section class="upload">
+      <form id="story-form">
+        <textarea id="story-input" placeholder="Paste your own story here..."></textarea>
+        <button type="submit">Submit</button>
+      </form>
+    </section>
+
+    <div class="main-grid">
+      <section class="story-section">
+        <h3>Story Snippet: <span class="subtitle">(click words to add to poem)</span></h3>
+        <div class="story" id="story"></div>
+      </section>
+
+      <section class="poem-section">
+        <h3>Your Poem:</h3>
+        <div class="poem" id="poem">(your poem appears here)</div>
+      </section>
+    </div>
+
+    <div class="menu">
+      <p>Click a word to mark it.</p>
+      <div class="buttons">
+        <button class="btn blockout" id="btn-blockout">Block/Unblock unmarked words</button>
+        <button class="btn clear" id="btn-clear">Clear marked words</button>
+        <button class="btn reset" id="btn-reset">Reset all words</button>
+      </div>
+      <div class="buttons secondary">
+        <button class="btn save" id="btn-save">Save Poem</button>
+        <button class="btn load" id="btn-load">Load Poem</button>
+        <button class="btn export" id="btn-export">Export</button>
+        <button class="btn import" id="btn-import">Import</button>
+        <button class="btn image" id="btn-image">Save Image</button>
+        <button class="btn share" id="btn-share">Share Link</button>
+      </div>
+
+      <div class="panel" id="save-panel">
+        <label for="save-name">Poem name:</label>
+        <div class="panel-row">
+          <input type="text" id="save-name" placeholder="My poem">
+          <button class="btn" id="save-confirm">Save</button>
+        </div>
+      </div>
+
+      <div class="panel" id="load-panel">
+        <div id="saved-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept=".json" style="display:none">
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

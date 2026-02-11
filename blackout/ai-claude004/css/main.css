@@ -1,0 +1,589 @@
+/* Reset and Base */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #e8e4dd;
+}
+
+/* Container */
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* Header */
+header h1 {
+  text-align: center;
+  color: #2a2520;
+  margin-bottom: 1rem;
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  letter-spacing: 0.02em;
+}
+
+/* Instructions */
+.info {
+  background-color: #faf8f3;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0dbd3;
+}
+
+.info h3 {
+  margin-bottom: 0.5rem;
+  color: #2a2520;
+}
+
+.info p {
+  color: #555;
+}
+
+/* Upload Form */
+.upload {
+  margin-bottom: 1.5rem;
+}
+
+.upload form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.upload textarea {
+  flex: 1;
+  min-width: 200px;
+  min-height: 80px;
+  padding: 0.5rem;
+  border: 1px solid #c8c3ba;
+  border-radius: 4px;
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  font-size: 1rem;
+  resize: vertical;
+  background-color: #faf8f3;
+  color: #333;
+}
+
+.upload textarea:focus {
+  outline: none;
+  border-color: #8a8279;
+  box-shadow: 0 0 0 2px rgba(138, 130, 121, 0.2);
+}
+
+.upload button {
+  padding: 0.5rem 1.5rem;
+  background: linear-gradient(to bottom, #5a7a9a, #4a6a8a);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.upload button:hover {
+  background: linear-gradient(to bottom, #4a6a8a, #3a5a7a);
+}
+
+.upload button:active {
+  transform: scale(0.97);
+}
+
+/* Main Grid - Story and Poem side by side */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 768px) {
+  .main-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Story Section - Paper aesthetic */
+.story-section {
+  background-color: #faf8f3;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #e0dbd3;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    inset 0 0 40px rgba(0, 0, 0, 0.02);
+  /* Paper texture via layered gradients */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 27px,
+      rgba(0, 0, 0, 0.015) 27px,
+      rgba(0, 0, 0, 0.015) 28px
+    ),
+    linear-gradient(
+      135deg,
+      rgba(200, 180, 150, 0.06) 0%,
+      transparent 50%,
+      rgba(200, 180, 150, 0.04) 100%
+    );
+  background-color: #faf8f3;
+}
+
+.story-section h3 {
+  padding-top: 0;
+  margin-bottom: 0.5rem;
+  color: #2a2520;
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+}
+
+.story-section .subtitle {
+  font-weight: normal;
+  font-size: 0.9rem;
+  color: #8a8279;
+}
+
+.story {
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  font-size: 18px;
+  margin-top: 5px;
+  line-height: 2;
+  color: #2a2520;
+}
+
+/* Poem Section */
+.poem-section {
+  padding: 1rem;
+  background-color: #faf8f3;
+  border-radius: 4px;
+  border: 1px solid #e0dbd3;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.poem-section h3 {
+  margin-bottom: 0.5rem;
+  color: #2a2520;
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+}
+
+.poem {
+  font-family: Georgia, 'Palatino Linotype', Palatino, serif;
+  font-size: 28px;
+  line-height: 1.4;
+  color: #2a2520;
+}
+
+/* Token Spans - Base styles for clickable elements */
+span.token {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out, background 0.3s ease-in-out;
+  border-radius: 3px;
+  cursor: pointer;
+  padding: 1px 2px;
+  position: relative;
+}
+
+span.token:hover:not(.blocked):not(.faded) {
+  background-color: rgba(255, 230, 0, 0.2);
+}
+
+/* Word tokens */
+span.token.word {
+  border-radius: 3px;
+}
+
+/* Punctuation tokens - slightly different style */
+span.token.punctuation {
+  border-radius: 2px;
+  padding: 1px 1px;
+}
+
+span.token.punctuation:hover:not(.blocked):not(.faded) {
+  background-color: rgba(255, 200, 100, 0.3);
+}
+
+/* Marked - selected for poem (highlighter effect) */
+/* Yellow bg on element (no distortion); ragged edge on ::before */
+.marked {
+  background-color: rgba(255, 230, 0, 0.4);
+  position: relative;
+  border-radius: 2px;
+  isolation: isolate;
+}
+
+.marked::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -4px;
+  right: -4px;
+  bottom: -2px;
+  background-color: rgba(255, 230, 0, 0.25);
+  filter: url(#highlighter-texture);
+  border-radius: 2px;
+  z-index: -1;
+}
+
+/* Blocked - marker blackout effect */
+.blocked {
+  background: linear-gradient(
+    175deg,
+    #111 0%,
+    #1a1a1a 30%,
+    #222 60%,
+    #181818 100%
+  );
+  color: transparent;
+  filter: url(#marker-texture);
+  border-radius: 3px;
+  transition: none;
+  box-shadow:
+    0 0 1px 0 rgba(0, 0, 0, 0.6),
+    0 1px 2px -1px rgba(0, 0, 0, 0.3),
+    inset 0 0 3px rgba(50, 50, 50, 0.4);
+}
+
+/* Blocked hover - no cursor change since it's blacked out */
+.blocked:hover {
+  cursor: default;
+}
+
+/* Faded - completely hidden */
+.faded {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+  border-radius: 4px;
+}
+
+/* Marker stroke animation - sweeps left to right */
+@keyframes marker-stroke {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Marker reveal animation - sweeps right to left for unblocking */
+@keyframes marker-reveal {
+  from {
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+/* Animation classes applied via JS */
+.animate-in {
+  animation: marker-stroke 0.15s ease-out forwards;
+}
+
+.animate-out {
+  animation: marker-reveal 0.15s ease-in forwards;
+}
+
+/* Menu */
+.menu {
+  background: linear-gradient(to bottom, #d5d0c8, #cac5bc);
+  padding: 1rem;
+  border: 1px solid #b5b0a7;
+  border-radius: 4px;
+}
+
+.menu p {
+  margin-bottom: 0.5rem;
+  color: #4a4540;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Secondary button row */
+.buttons.secondary {
+  margin-top: 0.5rem;
+}
+
+/* Buttons - polished */
+.btn {
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #faf8f3, #eae6df);
+  border: 1px solid #b5b0a7;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.btn:hover {
+  background: linear-gradient(to bottom, #f0ede6, #e0dbd3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.btn.reset {
+  background: linear-gradient(to bottom, #e04050, #c82333);
+  color: white;
+  border-color: #b51d2e;
+}
+
+.btn.reset:hover {
+  background: linear-gradient(to bottom, #d03040, #b81d2d);
+}
+
+.btn.blockout {
+  background: linear-gradient(to bottom, #444, #2a2a2a);
+  color: white;
+  border-color: #222;
+}
+
+.btn.blockout:hover {
+  background: linear-gradient(to bottom, #555, #3a3a3a);
+}
+
+.btn.blockout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn.clear {
+  background: linear-gradient(to bottom, #ffd030, #e8b800);
+  color: #333;
+  border-color: #c8a000;
+}
+
+.btn.clear:hover {
+  background: linear-gradient(to bottom, #f0c020, #d8a800);
+}
+
+/* Secondary action buttons - neutral muted gradient */
+.btn.save,
+.btn.load,
+.btn.export,
+.btn.import,
+.btn.image,
+.btn.share {
+  background: linear-gradient(to bottom, #d8d4cc, #c8c4bb);
+  color: #3a3530;
+  border-color: #b0aba2;
+}
+
+.btn.save:hover,
+.btn.load:hover,
+.btn.export:hover,
+.btn.import:hover,
+.btn.image:hover,
+.btn.share:hover {
+  background: linear-gradient(to bottom, #ccc8c0, #bbb7ae);
+}
+
+/* Panels */
+.panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease, padding 0.3s ease;
+  background-color: #faf8f3;
+  border: 1px solid #e0dbd3;
+  border-radius: 4px;
+  padding: 0 1rem;
+  margin-top: 0;
+}
+
+.panel.open {
+  max-height: 400px;
+  padding: 1rem;
+  margin-top: 0.5rem;
+}
+
+.panel label {
+  display: block;
+  font-size: 0.9rem;
+  color: #4a4540;
+  margin-bottom: 0.4rem;
+}
+
+.panel-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.panel-row input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #c8c3ba;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  background: #fff;
+}
+
+.panel-row input:focus {
+  outline: none;
+  border-color: #8a8279;
+}
+
+/* Saved poem list inside load panel */
+.saved-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0dbd3;
+}
+
+.saved-item:last-child {
+  border-bottom: none;
+}
+
+.saved-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.saved-name {
+  font-weight: bold;
+  color: #2a2520;
+  font-size: 0.95rem;
+}
+
+.saved-date {
+  font-size: 0.8rem;
+  color: #8a8279;
+}
+
+.saved-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.saved-actions button {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #b5b0a7;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.saved-actions .load-btn {
+  background: linear-gradient(to bottom, #5a7a9a, #4a6a8a);
+  color: white;
+  border-color: #3a5a7a;
+}
+
+.saved-actions .load-btn:hover {
+  background: linear-gradient(to bottom, #4a6a8a, #3a5a7a);
+}
+
+.saved-actions .delete-btn {
+  background: linear-gradient(to bottom, #e04050, #c82333);
+  color: white;
+  border-color: #b51d2e;
+}
+
+.saved-actions .delete-btn:hover {
+  background: linear-gradient(to bottom, #d03040, #b81d2d);
+}
+
+.empty-message {
+  color: #8a8279;
+  font-style: italic;
+  padding: 0.5rem 0;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(30, 28, 25, 0.92);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1000;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+/* Shared banner */
+.shared-banner {
+  background: linear-gradient(to right, #e8dfc8, #f0eadb);
+  border: 1px solid #d5cdb8;
+  border-radius: 4px;
+  padding: 0.6rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #5a5040;
+}
+
+.banner-dismiss {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: #8a8279;
+  padding: 0 0.25rem;
+  line-height: 1;
+}
+
+.banner-dismiss:hover {
+  color: #2a2520;
+}
+
+/* Headings */
+h3 {
+  padding-top: 1em;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .upload form {
+    flex-direction: column;
+  }
+
+  .upload button {
+    width: 100%;
+  }
+
+  .buttons {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .poem {
+    font-size: 22px;
+  }
+}

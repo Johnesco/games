@@ -1,0 +1,68 @@
+.poem {
+  font-size: 28px;
+}
+
+.story-section{
+  background-color: aliceblue
+}
+
+.blocked {
+  background-color: #222222;
+  transition: background-color 0.5s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
+  border-radius: 8px;
+}
+
+
+.faded {
+  opacity: .0;
+  transition: opacity 0.5s   ease-in-out;
+  border-radius: 8px;
+}
+
+span {
+  opacity: 1;
+  transition: opacity 0.5s   ease-in-out;
+  transition: background 0.5s   ease-in-out;
+  border-radius: 8px;
+}
+
+
+.story {
+  font-size:18px;
+  margin-top:5px;
+
+}
+
+
+
+h3{
+  padding-top:1em;
+}
+
+div.menu{
+  background: #CCCCCC;
+  padding: 3px;
+  border: 1px solid black;
+}
+
+.marked {
+  background-color: yellow;
+}
+
+div.btn.reset { background: red; }
+
+div.btn {
+  border-radius: 8px;
+  background: #FFFFFF;
+  /*display: inline-block;*/
+  vertical-align: middle;
+  margin: 4px 4px 4px 4px;
+  padding: 5px 5px 5px 5px;
+}
+
+
+
+.active{
+  background: yellow;
+}

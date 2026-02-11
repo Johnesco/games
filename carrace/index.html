@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Physics Sandbox</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-canvas"></div>
+        <div id="hud">
+            <div id="speed">0 MPH</div>
+            <div id="race-info">Lap 1/3 | P1</div>
+            <select id="driving-preset">
+                <option value="casual">Casual</option>
+                <option value="touring" selected>Touring</option>
+                <option value="sport">Sport</option>
+                <option value="race">Race</option>
+                <option value="drift">Drift</option>
+            </select>
+            <div id="debug"></div>
+        </div>
+        <div id="race-overlay"></div>
+    </div>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "cannon-es": "https://esm.sh/cannon-es@0.20.0"
+        }
+    }
+    </script>
+    <script type="module" src="js/main3d.js"></script>
+</body>
+</html>

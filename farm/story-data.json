@@ -1,0 +1,1561 @@
+{
+  "metadata": {
+    "title": "A Farmer's Heart",
+    "author": "Story Creator",
+    "description": "A branching adventure of a female farmer in Stardew Valley",
+    "startNode": "node1"
+  },
+  "nodes": {
+    "node1": {
+      "id": "node1",
+      "title": "A Fresh Start",
+      "text": "You inherit your grandfather's old farm in Stardew Valley. As you step off the bus, the fresh morning air fills your lungs. The farm is overgrown and ramshackle, but something about it feels right. The townspeople whisper about the mysterious farm girl who's returned home.\n\nIt's 6 AM on your first day. What do you do?",
+      "choices": [
+        {
+          "text": "Explore the farm first",
+          "nextNode": "node2"
+        },
+        {
+          "text": "Head into town to introduce yourself",
+          "nextNode": "node3"
+        },
+        {
+          "text": "Start fixing up the farmhouse",
+          "nextNode": "node4"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node2": {
+      "id": "node2",
+      "title": "Exploring the Farm",
+      "text": "You wander through the overgrown fields. Weeds everywhere. But wait—in the corner of the farm, you spot something glinting in the morning sun. It's an old chest, half-buried in the soil!\n\nYour heart races. What could be inside?",
+      "choices": [
+        {
+          "text": "Open the chest immediately",
+          "nextNode": "node5"
+        },
+        {
+          "text": "Mark its location and explore more first",
+          "nextNode": "node6"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node3": {
+      "id": "node3",
+      "title": "Meeting the Town",
+      "text": "The town square is charming, with a general store, tavern, and community center. The sun is barely up, but you spot a few early risers. A woman with green hair is watering plants near the community center. A man with a serious expression sweeps the bridge. A young musician sits alone on a bench.\n\nWho catches your attention?",
+      "choices": [
+        {
+          "text": "Talk to the woman with green hair",
+          "nextNode": "node7"
+        },
+        {
+          "text": "Talk to the serious-looking man",
+          "nextNode": "node8"
+        },
+        {
+          "text": "Talk to the musician",
+          "nextNode": "node9"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node4": {
+      "id": "node4",
+      "title": "The Farmhouse",
+      "text": "You spend hours sweeping out decades of dust and cobwebs. By noon, you're exhausted but the farmhouse is livable. As you sit down for a well-deserved rest, you notice a journal on the shelf—your grandfather's journal.\n\nDo you read it?",
+      "choices": [
+        {
+          "text": "Read the journal now",
+          "nextNode": "node10"
+        },
+        {
+          "text": "Leave it for later and explore town",
+          "nextNode": "node3"
+        },
+        {
+          "text": "Put it away—some things are better left in the past",
+          "nextNode": "node11"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node5": {
+      "id": "node5",
+      "title": "The Chest's Secret",
+      "text": "You pry open the chest with a rusty farm tool. Inside gleams an ancient necklace with a glowing crystal pendant. The moment you touch it, visions flood your mind—your grandfather, magical harvests, a love lost to time.\n\nThe necklace feels warm in your hand. You sense it's connected to the farm's mysterious past.",
+      "choices": [
+        {
+          "text": "Wear the necklace immediately",
+          "nextNode": "node12"
+        },
+        {
+          "text": "Keep it safe but don't wear it yet",
+          "nextNode": "node13"
+        },
+        {
+          "text": "Show it to the townspeople",
+          "nextNode": "node14"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node6": {
+      "id": "node6",
+      "title": "Further Exploration",
+      "text": "You continue exploring and find a hidden spring in the forest at the edge of your property. The water glows faintly with an otherworldly blue light. Local legend says the spring grants wishes to pure-hearted farmers.\n\nYou're mesmerized. But you also remember that chest you found earlier.",
+      "choices": [
+        {
+          "text": "Return to the chest",
+          "nextNode": "node5"
+        },
+        {
+          "text": "Spend the day at the spring, meditating",
+          "nextNode": "node15"
+        },
+        {
+          "text": "Head to town to ask about the spring",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node7": {
+      "id": "node7",
+      "title": "Meeting Abigail",
+      "text": "The woman introduces herself as Abigail. Her green hair catches the light as she smiles warmly at you. 'Welcome to Pelican Town! I work at the community center preserving our town's history. Are you the farmer who just inherited the old farm?'\n\nShe seems genuinely interested in you. Her eyes are kind.",
+      "choices": [
+        {
+          "text": "Invite her to see the farm",
+          "nextNode": "node16"
+        },
+        {
+          "text": "Ask about the town's history",
+          "nextNode": "node17"
+        },
+        {
+          "text": "Exchange pleasantries and move on",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node8": {
+      "id": "node8",
+      "title": "Meeting Sebastian",
+      "text": "The man stops sweeping and looks at you with dark, guarded eyes. 'You're the new farmer,' he says flatly. 'Name's Sebastian. Don't expect much help from the town. We keep to ourselves here.'\n\nHe seems troubled, carrying some hidden weight. But there's something intriguing about his mystery.",
+      "choices": [
+        {
+          "text": "Ask him what's troubling him",
+          "nextNode": "node18"
+        },
+        {
+          "text": "Suggest going somewhere quieter to talk",
+          "nextNode": "node19"
+        },
+        {
+          "text": "Thank him and explore the rest of town",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node9": {
+      "id": "node9",
+      "title": "Meeting Elliott",
+      "text": "The musician looks up as you approach. His auburn hair falls across his face as he smiles. 'Good morning, fair stranger,' he says with theatrical flair. 'I am Elliott, wandering musician and poet. Come to grace our humble town, have you?'\n\nHe's charming and artistic, clearly an outsider like you.",
+      "choices": [
+        {
+          "text": "Ask about his music and dreams",
+          "nextNode": "node20"
+        },
+        {
+          "text": "Invite him to visit the farm",
+          "nextNode": "node21"
+        },
+        {
+          "text": "Keep conversation brief",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node10": {
+      "id": "node10",
+      "title": "Grandfather's Secret",
+      "text": "You read through the journal, tears streaming down your face. Your grandfather was a farmer, yes—but he was also a guardian of the farm's magical heritage. The last entry mentions a great darkness threatening the valley and a prophecy: his descendant would return to restore balance.\n\nYou read: 'The girl will return when the valley needs her most. Guide her well, old friend.'\n\nWho is the 'old friend' he meant?",
+      "choices": [
+        {
+          "text": "Seek out the town's elder",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Look for more clues around the farm",
+          "nextNode": "node23"
+        },
+        {
+          "text": "Dismiss it as the ramblings of an eccentric old man",
+          "nextNode": "node24"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node11": {
+      "id": "node11",
+      "title": "Moving Forward",
+      "text": "You decide not to dwell on the past. Life is about new beginnings, not old secrets. As the sun sets on your first day, you feel a sense of peace about your decision.\n\nTomorrow, you'll start building your farm and meeting people with fresh eyes, unencumbered by history.",
+      "choices": [
+        {
+          "text": "Head to town the next day",
+          "nextNode": "node3"
+        },
+        {
+          "text": "Start working on the farm fields",
+          "nextNode": "node25"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node12": {
+      "id": "node12",
+      "title": "The Necklace Awakens",
+      "text": "The moment you slip the necklace on, you feel a surge of energy. Your senses heighten. You can see the magical aura around crops, sense the flow of energy through the land. The farm glows with potential—and with warning.\n\nYou realize the necklace was a warning from your grandfather. Something is wrong with the valley's magic.",
+      "choices": [
+        {
+          "text": "Find someone knowledgeable about magic",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Use your new senses to explore the farm",
+          "nextNode": "node26"
+        },
+        {
+          "text": "Go to town and show someone the necklace",
+          "nextNode": "node27"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node13": {
+      "id": "node13",
+      "title": "Cautious Guardian",
+      "text": "You wrap the necklace carefully and hide it in the farmhouse. It feels important, powerful—something meant for a specific purpose, not casual wear.\n\nFor now, you decide to meet the townspeople first. Perhaps someone will recognize it, or perhaps the right moment to use it will reveal itself.",
+      "choices": [
+        {
+          "text": "Head to town to meet people",
+          "nextNode": "node3"
+        },
+        {
+          "text": "Work on the farm and wait for a sign",
+          "nextNode": "node25"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node14": {
+      "id": "node14",
+      "title": "The Town's Reaction",
+      "text": "You bring the necklace to the town square. The moment people see it, conversations stop. An elderly woman gasps. A merchant whispers to his wife. Everyone's demeanor changes—from casual indifference to careful respect.\n\n'You found the Heart of the Valley,' the elderly woman says solemnly. 'Your grandfather was its last keeper.'",
+      "choices": [
+        {
+          "text": "Ask the elder woman everything she knows",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Ask a specific person—who? Abigail, Sebastian, or Elliott?",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node15": {
+      "id": "node15",
+      "title": "Magical Communion",
+      "text": "You spend hours at the spring, meditating. As the day wears on, you enter a deep meditative state. Visions come to you—your grandfather protecting the valley, a darkness spreading from the mines, a prophecy written in starlight.\n\nYou understand now: you have a destiny here. The farm chose you as much as you chose it.",
+      "choices": [
+        {
+          "text": "Return home and prepare for your purpose",
+          "nextNode": "node26"
+        },
+        {
+          "text": "Go to town and seek allies",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node16": {
+      "id": "node16",
+      "title": "Abigail at the Farm",
+      "text": "You bring Abigail to the farm. As you walk through the overgrown fields, she stops suddenly. 'This place... I can feel something here. Old magic, protective magic.'\n\nShe turns to you with wonder in her eyes. 'Your grandfather was special, wasn't he?'",
+      "choices": [
+        {
+          "text": "Tell her everything you know",
+          "nextNode": "node28"
+        },
+        {
+          "text": "Ask what she knows about magical farms",
+          "nextNode": "node17"
+        },
+        {
+          "text": "Suggest she help you restore it",
+          "nextNode": "node29"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node17": {
+      "id": "node17",
+      "title": "Town History",
+      "text": "Abigail explains: 'The valley has an old history. Legends speak of magical farms, guardians who kept balance between the human world and the magical one. Most people dismiss it as folklore, but...' she pauses, 'I think it might be real.'\n\nShe looks at you intently. 'Why do you ask? Does it concern you?'",
+      "choices": [
+        {
+          "text": "Share your grandfather's journal with her",
+          "nextNode": "node28"
+        },
+        {
+          "text": "Say you're just curious about local history",
+          "nextNode": "node16"
+        },
+        {
+          "text": "Thank her and meet other townspeople",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node18": {
+      "id": "node18",
+      "title": "Sebastian's Burden",
+      "text": "Sebastian hesitates, then speaks quietly. 'The town is... changing. There's something wrong in the mines. Darker. Colder. My father says it's nothing, but I know better. And now you arrive, of all people—the heir to that old farm.'\n\nHe looks at you with surprising intensity. 'You didn't come here by accident, did you?'",
+      "choices": [
+        {
+          "text": "Admit you sense something is wrong too",
+          "nextNode": "node30"
+        },
+        {
+          "text": "Ask him to show you the mines",
+          "nextNode": "node31"
+        },
+        {
+          "text": "Tell him you're just a simple farmer",
+          "nextNode": "node24"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node19": {
+      "id": "node19",
+      "title": "Quiet Conversation",
+      "text": "You suggest going to the beach to talk privately. Sebastian agrees, and as you walk together, he opens up slightly. 'Most people don't care enough to ask,' he admits.\n\nYou reach the beach as the sun climbs higher. The waves crash peacefully as he talks about feeling like he doesn't belong in this town.",
+      "choices": [
+        {
+          "text": "Suggest he help you with the farm",
+          "nextNode": "node32"
+        },
+        {
+          "text": "Ask about the darkness he mentioned",
+          "nextNode": "node18"
+        },
+        {
+          "text": "Share your own feelings of displacement",
+          "nextNode": "node33"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node20": {
+      "id": "node20",
+      "title": "Elliott's Dreams",
+      "text": "Elliott's eyes light up. 'Ah, a kindred spirit! I came to this town seeking inspiration for my music and poetry. I want to write something that captures the essence of this land—its beauty, its secrets.'\n\nHe looks at you curiously. 'And what brings you to our valley, fair farmer?'",
+      "choices": [
+        {
+          "text": "Tell him about your inheritance",
+          "nextNode": "node21"
+        },
+        {
+          "text": "Ask if he's sensed anything magical about the valley",
+          "nextNode": "node34"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node21": {
+      "id": "node21",
+      "title": "Elliott at the Farm",
+      "text": "Elliott visits your farm and is enchanted. 'This place,' he breathes, 'it's alive with possibility. I can feel stories in the soil, melodies in the wind.'\n\nHe looks at you with sudden seriousness. 'There's something special about you and this land. I sensed it the moment we met.'",
+      "choices": [
+        {
+          "text": "Ask what he means by 'special'",
+          "nextNode": "node34"
+        },
+        {
+          "text": "Tell him about the magical aspects of the farm",
+          "nextNode": "node35"
+        },
+        {
+          "text": "Keep it light and ask him to help work on the farm",
+          "nextNode": "node36"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node22": {
+      "id": "node22",
+      "title": "The Elder's Knowledge",
+      "text": "You find the town elder, Evelyn, tending her garden. When you mention your grandfather's name, her entire demeanor changes.\n\n'Your grandfather was the last guardian,' she says gravely. 'He protected this valley from a darkness that sleeps in the deep mines. The necklace you wear—or found—was meant to wake the next guardian when danger returned.'\n\nShe grasps your hand. 'Is the darkness waking?'",
+      "choices": [
+        {
+          "text": "Tell her what you've sensed so far",
+          "nextNode": "node37"
+        },
+        {
+          "text": "Ask for guidance on how to be a guardian",
+          "nextNode": "node38"
+        },
+        {
+          "text": "Ask to hear the full history",
+          "nextNode": "node39"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node23": {
+      "id": "node23",
+      "title": "Hidden Clues",
+      "text": "You search the farm carefully. In the cellar, you find old paintings, ancient texts, and most importantly—a map of the valley marked with magical locations: the spring in the forest, a circle of stones in the mountains, and a seal marking the mines.\n\nYour grandfather annotated: 'The seal must be maintained. If it breaks, darkness escapes.'",
+      "choices": [
+        {
+          "text": "Go check on the seal in the mines",
+          "nextNode": "node31"
+        },
+        {
+          "text": "Visit each marked location first",
+          "nextNode": "node40"
+        },
+        {
+          "text": "Seek the elder's guidance",
+          "nextNode": "node22"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node24": {
+      "id": "node24",
+      "title": "The Ordinary Life",
+      "text": "You decide the journal is just the musings of an old man. You're here to farm, not to save the world. Days pass as you settle into farm life: planting, watering, getting to know the townspeople.\n\nEverything seems normal. Perhaps too normal.",
+      "choices": [
+        {
+          "text": "Continue your peaceful farming life",
+          "nextNode": "node41"
+        },
+        {
+          "text": "Notice something strange happening",
+          "nextNode": "node42"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node25": {
+      "id": "node25",
+      "title": "Farmwork Begins",
+      "text": "You spend your first week clearing fields, planting seeds, and fixing broken fences. It's hard work but rewarding. As you labor under the sun, you feel connected to the land in a way you never expected.\n\nOne afternoon, you find something unusual: a patch of land where nothing will grow, and the soil is cold despite the warm day.",
+      "choices": [
+        {
+          "text": "Investigate the dead patch",
+          "nextNode": "node43"
+        },
+        {
+          "text": "Ignore it for now and go to town",
+          "nextNode": "node3"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node26": {
+      "id": "node26",
+      "title": "Awakening Power",
+      "text": "With new magical senses—or with new determination—you understand the farm's true nature. You sense imbalances in the land's energy. The protective magic is weakening. Something in the mines grows stronger, hungrier.\n\nYou need allies. You need knowledge. You need to act soon.",
+      "choices": [
+        {
+          "text": "Seek out the town elder",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Find the strongest, most trustworthy person in town",
+          "nextNode": "node3"
+        },
+        {
+          "text": "Go directly to the mines to investigate",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node27": {
+      "id": "node27",
+      "title": "The Necklace Revealed",
+      "text": "You wear the necklace to town. People react with shock and reverence. One elderly woman approaches you with tears in her eyes.\n\n'I knew your grandfather,' she says. 'And I see him in you. That necklace—it hasn't been seen in thirty years. Why now? Why now?'",
+      "choices": [
+        {
+          "text": "Ask her to tell you everything",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Ask if something dangerous is happening",
+          "nextNode": "node44"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node28": {
+      "id": "node28",
+      "title": "Confiding in Abigail",
+      "text": "You tell Abigail about the journal, the necklace (if you found it), and your grandfather's secret legacy. She listens intently, and when you finish, she squeezes your hand.\n\n'I believe you,' she says simply. 'And I want to help. The valley's darkness—I've felt it growing for months now. Whatever your grandfather tried to prevent, it's returning.'",
+      "choices": [
+        {
+          "text": "Form a team with Abigail",
+          "nextNode": "node45"
+        },
+        {
+          "text": "Ask her to gather other trustworthy people",
+          "nextNode": "node46"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node29": {
+      "id": "node29",
+      "title": "Partners in Restoration",
+      "text": "Abigail agrees enthusiastically. 'I'd love to help restore this place. There's something magical about it—I've always felt it.'\n\nOver the following weeks, you work together. Abigail brings the town's historical knowledge while you bring your connection to the land. Your friendship deepens into something more—you catch her watching you with soft eyes when she thinks you're not looking.",
+      "choices": [
+        {
+          "text": "Continue into a romantic relationship",
+          "nextNode": "node47"
+        },
+        {
+          "text": "Keep it professional and discover the farm's true purpose",
+          "nextNode": "node48"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node30": {
+      "id": "node30",
+      "title": "Kindred Spirits",
+      "text": "Sebastian's expression softens. 'So you feel it too. Good. Then you understand—this isn't about farming. This is about something much bigger.'\n\nHe extends his hand. 'Whatever you're planning, I'm in. The town needs someone brave enough to face what's coming.'",
+      "choices": [
+        {
+          "text": "Ask him to be your partner in this fight",
+          "nextNode": "node49"
+        },
+        {
+          "text": "Ask him to help you gather allies",
+          "nextNode": "node50"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node31": {
+      "id": "node31",
+      "title": "The Mines Explored",
+      "text": "You descend into the mines with Sebastian (if he's joined you) or alone. The deeper you go, the colder it gets. The stone walls seem to pulse with malevolent energy. You reach a deep chamber where an ancient seal glows weakly—and cracks run across its surface.\n\nSomething ancient stirs behind the seal, testing its boundaries.",
+      "choices": [
+        {
+          "text": "Try to repair the seal immediately",
+          "nextNode": "node51"
+        },
+        {
+          "text": "Return to seek help from the elder",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Confront the entity behind the seal",
+          "nextNode": "node52"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node32": {
+      "id": "node32",
+      "title": "Sebastian's Choice",
+      "text": "Sebastian looks surprised, then grateful. 'You'd want my help? After knowing me for one day?'\n\nYou nod. He smiles genuinely—the first real smile you've seen from him. 'Then yes. I'll help. But know this—if there's danger on that farm, I'm not letting you face it alone.'",
+      "choices": [
+        {
+          "text": "Begin working on the farm together",
+          "nextNode": "node49"
+        },
+        {
+          "text": "Ask him about the mines first",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node33": {
+      "id": "node33",
+      "title": "Connection Found",
+      "text": "As you talk about your shared feelings of not quite belonging, something shifts between you and Sebastian. He looks at you differently—with recognition, with care. When he speaks again, his voice is softer.\n\n'Maybe we were meant to find each other here,' he says quietly.",
+      "choices": [
+        {
+          "text": "Explore this growing attraction",
+          "nextNode": "node49"
+        },
+        {
+          "text": "Keep focus on the danger to the valley",
+          "nextNode": "node30"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node34": {
+      "id": "node34",
+      "title": "Elliott's Intuition",
+      "text": "Elliott takes your hands, his eyes searching yours. 'I don't know how to explain it. You carry a weight—destiny, perhaps? And the farm... it responds to you in ways I've never seen land respond to anyone.'\n\nHe pauses. 'Whatever you're meant to do here, you won't be alone. I want to be part of your story.'",
+      "choices": [
+        {
+          "text": "Accept Elliott's support",
+          "nextNode": "node35"
+        },
+        {
+          "text": "Ask him to help find other allies",
+          "nextNode": "node46"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node35": {
+      "id": "node35",
+      "title": "Elliott's Role",
+      "text": "You explain the magical aspects of the farm to Elliott. He listens with wonder and conviction. 'I knew it,' he breathes. 'I've been searching for true magic my whole life. And here it is—with you, in this place.'\n\nHe looks at you with tender intensity. 'Let me stand beside you, as poet and protector.'",
+      "choices": [
+        {
+          "text": "Accept his romantic feelings and partnership",
+          "nextNode": "node53"
+        },
+        {
+          "text": "Focus on the mission but welcome his friendship",
+          "nextNode": "node54"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node36": {
+      "id": "node36",
+      "title": "Farm Work with Elliott",
+      "text": "Elliott helps you work the farm, though he's admittedly better with music than with plants. But his company makes the work lighter. You laugh together as he attempts to fix a fence and nearly falls off a ladder.\n\nOver time, you realize you're beginning to have feelings for him—but there are larger concerns.",
+      "choices": [
+        {
+          "text": "Tell him about the farm's true nature",
+          "nextNode": "node35"
+        },
+        {
+          "text": "Ask if he's sensed anything unusual about the valley",
+          "nextNode": "node34"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node37": {
+      "id": "node37",
+      "title": "The Elder's Confirmation",
+      "text": "You tell Evelyn about the cold patch on your farm, the feeling of growing darkness, and the sealed mines. Her face grows grave.\n\n'It's beginning,' she says softly. 'Your grandfather held it back for forty years. But the seal was never permanent—only a guardian's constant vigilance could maintain it. Without him...'\n\nShe looks at you. 'The question is: will you accept this burden?'",
+      "choices": [
+        {
+          "text": "Accept the role of guardian fully",
+          "nextNode": "node38"
+        },
+        {
+          "text": "Ask for more time before deciding",
+          "nextNode": "node39"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node38": {
+      "id": "node38",
+      "title": "Guardian's Path",
+      "text": "You accept the role. Evelyn nods solemnly and begins to teach you. She shows you ancient rituals, teaches you to sense magical imbalances, and reveals the history of guardians stretching back centuries.\n\n'Your power comes from your bloodline and your bond with the land,' she explains. 'The stronger that bond, the stronger your abilities.'",
+      "choices": [
+        {
+          "text": "Ask about the entity in the mines",
+          "nextNode": "node39"
+        },
+        {
+          "text": "Begin restoring the farm's magical defenses",
+          "nextNode": "node55"
+        },
+        {
+          "text": "Ask what allies you can gather",
+          "nextNode": "node46"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node39": {
+      "id": "node39",
+      "title": "The Valley's History",
+      "text": "Evelyn tells you the full story: 'Long ago, something ancient and dark tried to consume this valley. A great mage sealed it away, binding it with blood magic and creating a line of guardians to maintain the seal.\n\nYour grandfather was the last. For forty years, he protected us. When he died, the seal began to weaken. Now, it's breaking.'\n\nShe looks at you intently. 'The darkness—it's called the Blight. And it's waking up.'",
+      "choices": [
+        {
+          "text": "Ask how to fight the Blight",
+          "nextNode": "node56"
+        },
+        {
+          "text": "Ask if there's any way to banish it permanently",
+          "nextNode": "node57"
+        },
+        {
+          "text": "Ask about your grandfather's final days",
+          "nextNode": "node58"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node40": {
+      "id": "node40",
+      "title": "The Magical Locations",
+      "text": "You visit each marked location your grandfather noted: the spring glows with protective light, the stone circle pulses gently, but the mines... the mines feel wrong. Dark. Hungry.\n\nYou realize your grandfather must have spent years maintaining these places, keeping the magical balance. Without him, they're weakening.",
+      "choices": [
+        {
+          "text": "Focus on strengthening each location",
+          "nextNode": "node55"
+        },
+        {
+          "text": "Confront the darkness in the mines directly",
+          "nextNode": "node31"
+        },
+        {
+          "text": "Seek the elder's guidance immediately",
+          "nextNode": "node22"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node41": {
+      "id": "node41",
+      "title": "The Peaceful Ending",
+      "text": "You settle into farm life. Your crops grow, the townspeople become your friends. You don't know about magic or prophecies—or perhaps you ignore what you sensed.\n\nYears pass. You build a life here: simple, honest, and happy. You never fully restore the farm to what it once was, but it's enough for you.\n\nSometimes, in quiet moments, you wonder about that journal. But you never open it.\n\n**The End: A Quiet Life**\n\n*You chose peace over destiny. The world continues on, unchanged by your hand.*",
+      "isEnding": true,
+      "endingType": "peaceful",
+      "choices": []
+    },
+    "node42": {
+      "id": "node42",
+      "title": "Strange Occurrences",
+      "text": "Weeks into your peaceful farm life, things start going wrong. Crops wilt overnight for no reason. Animals behave strangely. The townspeople seem anxious about something they won't discuss.\n\nYou start noticing the connection: these incidents happen on your farm more than anywhere else.\n\nIs it time to take the mysterious journal seriously?",
+      "choices": [
+        {
+          "text": "Finally read your grandfather's journal",
+          "nextNode": "node10"
+        },
+        {
+          "text": "Ask the townspeople what's happening",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Try to discover answers on your own",
+          "nextNode": "node23"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node43": {
+      "id": "node43",
+      "title": "The Dead Patch",
+      "text": "You investigate the patch where nothing grows. The soil is indeed cold, and when you touch it, you feel a wrongness—like the land itself is sick.\n\nYou realize this might be a symptom of something much larger. Is the darkness your grandfather feared beginning to spread?",
+      "choices": [
+        {
+          "text": "Read the journal for answers",
+          "nextNode": "node10"
+        },
+        {
+          "text": "Ask the townspeople about it",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Try to heal the patch yourself",
+          "nextNode": "node59"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node44": {
+      "id": "node44",
+      "title": "Danger Confirmed",
+      "text": "The woman's expression confirms your worst fears. 'Yes,' she says quietly. 'The seals have been weakening. Your grandfather kept something at bay. Something old. Something hungry.'\n\nShe grasps your arm firmly. 'The necklace isn't decoration—it's a weapon. And you're going to need to learn how to use it.'",
+      "choices": [
+        {
+          "text": "Ask her to teach you immediately",
+          "nextNode": "node22"
+        },
+        {
+          "text": "Demand to know the full truth",
+          "nextNode": "node39"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node45": {
+      "id": "node45",
+      "title": "Abigail, Trusted Ally",
+      "text": "You and Abigail form a strong partnership. She uses her historical knowledge to help you understand the valley's magical defenses while you help restore the farm.\n\nDays turn into months. Your bond deepens—both as partners in your quest and as something more. Abigail becomes essential to you, both as ally and as the person you love.\n\nTogether, you feel ready to face whatever comes.",
+      "choices": [
+        {
+          "text": "Ask Abigail to help recruit more allies",
+          "nextNode": "node46"
+        },
+        {
+          "text": "Confess your deepening feelings to her",
+          "nextNode": "node47"
+        },
+        {
+          "text": "Begin investigating the mines together",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node46": {
+      "id": "node46",
+      "title": "Gathering Allies",
+      "text": "You and your companion (Abigail, Sebastian, Elliott, or whoever has joined you) seek out others who might help. You find that several townspeople have sensed the growing darkness and are willing to stand with you.\n\nSebastion brings street smarts. Elliott brings magic-attuned intuition. Abigail brings historical knowledge. Evelyn brings ancient wisdom.\n\nYou're no longer alone. You have a team.",
+      "choices": [
+        {
+          "text": "Plan your assault on the mines",
+          "nextNode": "node60"
+        },
+        {
+          "text": "First, strengthen the farm's magical defenses",
+          "nextNode": "node55"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node47": {
+      "id": "node47",
+      "title": "Love Blooms",
+      "text": "You finally tell Abigail how you feel. She smiles—a smile that takes your breath away—and leans in to kiss you.\n\n'I've felt it too,' she whispers. 'I was just waiting for you to say it.'\n\nWith Abigail by your side—as lover and partner—you feel ready to face anything. The bond between you strengthens your magical connection to the land.",
+      "choices": [
+        {
+          "text": "Together, prepare to defend the valley",
+          "nextNode": "node55"
+        },
+        {
+          "text": "Together, investigate the growing darkness",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node48": {
+      "id": "node48",
+      "title": "The Farm's Secret",
+      "text": "As you and Abigail work to restore the farm, you discover its true purpose: it's not just a home, it's a nexus of magical power—the heart of the valley's defense.\n\nYour grandfather didn't just farm here. He channeled protective magic through the land itself, creating a barrier against the darkness below.\n\nRestoring the farm fully is the key to saving the valley.",
+      "choices": [
+        {
+          "text": "Begin the restoration ritual",
+          "nextNode": "node55"
+        },
+        {
+          "text": "Gather allies to help with the ritual",
+          "nextNode": "node46"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node49": {
+      "id": "node49",
+      "title": "Sebastian, Your Partner",
+      "text": "Sebastian becomes both your ally and your love. His dark, protective presence contrasts with your light, but together you're balanced. He helps you navigate the dangers ahead, and slowly, the barriers around his heart fall away.\n\n'You changed my life,' he tells you one evening. 'Before you, I thought this town had nothing for me. Now...'\n\nHe kisses you softly, and you know you're exactly where you're meant to be.",
+      "choices": [
+        {
+          "text": "Together, prepare for the battles ahead",
+          "nextNode": "node55"
+        },
+        {
+          "text": "Explore the mines together",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node50": {
+      "id": "node50",
+      "title": "Sebastian Recruits",
+      "text": "Sebastian helps you gather allies. His connections in the town run deeper than you expected. He brings people who are loyal to him and willing to trust his judgment.\n\nSoon you have a solid team ready to help defend the valley. Sebastian's support means everything to you.",
+      "choices": [
+        {
+          "text": "Plan your next moves together",
+          "nextNode": "node60"
+        },
+        {
+          "text": "Head into the mines to assess the threat",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node51": {
+      "id": "node51",
+      "title": "Repairing the Seal",
+      "text": "You place your hands on the seal. It's warm—almost alive. You can feel the magic within you reaching out, intertwining with the ancient magic of the seal.\n\nIt's difficult. It's painful. But slowly, the cracks begin to close. Your blood—the blood of a guardian—fuels the restoration.\n\nThe seal holds. For now, the Blight is contained once more.",
+      "choices": [
+        {
+          "text": "Complete the restoration and return home",
+          "nextNode": "node61"
+        },
+        {
+          "text": "Push further and try to permanently banish the Blight",
+          "nextNode": "node62"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node52": {
+      "id": "node52",
+      "title": "The Blight Awakens",
+      "text": "You stare into the darkness beyond the cracking seal. Something massive stirs. Eyes—if you can call them that—open in the blackness. A voice like grinding stone speaks directly into your mind.\n\n'Guardian's child... at last. Do you understand? The seal cannot hold forever. We will emerge. We will consume. Why resist the inevitable?'",
+      "choices": [
+        {
+          "text": "Refuse and repair the seal",
+          "nextNode": "node51"
+        },
+        {
+          "text": "Demand to know what the Blight is",
+          "nextNode": "node63"
+        },
+        {
+          "text": "Try to bargain with it",
+          "nextNode": "node64"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node53": {
+      "id": "node53",
+      "title": "Elliott's Love",
+      "text": "Elliott becomes your lover and your greatest supporter. His poetry takes on new meaning as he weaves the story of your love and quest into verses that seem almost magical themselves.\n\n'You are my muse,' he tells you, 'and my reason for believing in something greater than myself.'\n\nWith Elliott's love fueling your courage, you prepare to face the valley's darkness.",
+      "choices": [
+        {
+          "text": "Together, seek out the source of danger",
+          "nextNode": "node31"
+        },
+        {
+          "text": "Together, strengthen the farm's magical defenses",
+          "nextNode": "node55"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node54": {
+      "id": "node54",
+      "title": "Elliott's Friendship",
+      "text": "You and Elliott develop a deep friendship based on mutual respect and love for the land and its mysteries. He becomes your confidant and supporter, helping you navigate the magical realm without romantic entanglement.\n\nHis intuition and artistic perspective help you see solutions you might have missed, and his loyalty never wavers.",
+      "choices": [
+        {
+          "text": "Begin defending the valley with Elliott's support",
+          "nextNode": "node55"
+        },
+        {
+          "text": "Ask Elliott to help recruit other allies",
+          "nextNode": "node46"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node55": {
+      "id": "node55",
+      "title": "Magical Restoration",
+      "text": "You begin the work of restoration. You cleanse the dead patches on your farm. You meditate at the spring and help its protective magic grow stronger. You visit the stone circle and renew its wards.\n\nWith each act, you feel your connection to the land deepening. The farm responds to your touch. Magic flows through it once more.\n\nBut you can feel it in your bones: this is only a temporary solution. The seal won't hold forever.",
+      "choices": [
+        {
+          "text": "Prepare to confront the Blight directly",
+          "nextNode": "node60"
+        },
+        {
+          "text": "Enter the mines to assess the true threat",
+          "nextNode": "node31"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node56": {
+      "id": "node56",
+      "title": "Fighting the Blight",
+      "text": "Evelyn explains: 'The Blight feeds on darkness, despair, and decay. It's ancient—older than human civilization. But it has weaknesses.'\n\nShe teaches you: 'Hope, courage, love, and sacrifice—these things burn it. A guardian infused with these emotions can wound it, drive it back. Multiple guardians, working in unity, could perhaps even destroy it.'",
+      "choices": [
+        {
+          "text": "Ask how many guardians exist now",
+          "nextNode": "node57"
+        },
+        {
+          "text": "Declare you'll fight it alone if necessary",
+          "nextNode": "node65"
+        },
+        {
+          "text": "Ask if anyone else in town is a latent guardian",
+          "nextNode": "node66"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node57": {
+      "id": "node57",
+      "title": "Permanent Banishment",
+      "text": "Evelyn's face grows distant. 'There is one way. The oldest grimoire—hidden in the church vault—contains a ritual of permanent banishment. But it requires sacrifice.'\n\nShe pauses, choosing her words carefully. 'The guardian must offer what they value most. For your grandfather, it would have been his life. He chose not to perform it.'\n\nShe looks at you. 'Would you?'",
+      "choices": [
+        {
+          "text": "Agree to perform the ritual if necessary",
+          "nextNode": "node67"
+        },
+        {
+          "text": "Ask if there's another way",
+          "nextNode": "node56"
+        },
+        {
+          "text": "Ask what happened to your grandfather",
+          "nextNode": "node58"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node58": {
+      "id": "node58",
+      "title": "Your Grandfather's Legacy",
+      "text": "Evelyn's eyes fill with tears. 'Your grandfather was a good man. When the Blight first threatened to break through, he chose to maintain the seal rather than perform the banishment ritual. He said... he said he wanted to give future generations a chance at a better solution.'\n\nShe takes your hand. 'He spent forty years keeping the darkness at bay. And when he could no longer hold it, he accepted his fate peacefully. He died as a guardian should: with courage and hope.'\n\nShe looks at you intently. 'He was waiting for you.'",
+      "choices": [
+        {
+          "text": "Ask to learn about the banishment ritual",
+          "nextNode": "node57"
+        },
+        {
+          "text": "Ask about other ways to fight the Blight",
+          "nextNode": "node56"
+        },
+        {
+          "text": "Request to see your grandfather's belongings",
+          "nextNode": "node68"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node59": {
+      "id": "node59",
+      "title": "Attempting Healing",
+      "text": "You pour your energy into healing the patch. At first, nothing happens. Then, slowly, you feel something shift. The cold recedes. Life returns.\n\nBut as the patch heals, you sense something ominous: the cold spread from deeper in the earth. There's a source. And it's growing stronger.",
+      "choices": [
+        {
+          "text": "Follow the coldness to its source",
+          "nextNode": "node31"
+        },
+        {
+          "text": "Seek Evelyn's help immediately",
+          "nextNode": "node22"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node60": {
+      "id": "node60",
+      "title": "The Plan",
+      "text": "You and your allies gather to plan. The strategy is clear: you need to reach the seal in the mines and either repair it or perform the banishment ritual.\n\nEach person has a role. Each person knows the stakes. Tonight, you descend into darkness together.\n\nAs you prepare, you feel the love and support of those around you. Whatever comes, you won't face it alone.",
+      "choices": [
+        {
+          "text": "Descend into the mines together",
+          "nextNode": "node69"
+        },
+        {
+          "text": "Perform a ritual to strengthen yourselves first",
+          "nextNode": "node70"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node61": {
+      "id": "node61",
+      "title": "The Seal Restored",
+      "text": "You emerge from the mines, exhausted but alive. The seal holds. The darkness is contained once more.\n\nYou return to your farm as the sun rises. Your loved ones rush to greet you. You're safe. The valley is safe.\n\nBut you know—deep in your bones—this is only a temporary victory. The seal will hold for years, perhaps decades. But one day, you or another guardian will need to face this again.\n\nFor now, you rest.",
+      "choices": [
+        {
+          "text": "Build a life knowing the darkness will return",
+          "nextNode": "node71"
+        },
+        {
+          "text": "Immediately plan for the final confrontation",
+          "nextNode": "node72"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node62": {
+      "id": "node62",
+      "title": "The Final Ritual",
+      "text": "You push further, demanding more from the magic within you. The seal transforms from a barrier into a weapon. Your magic—the magic of a guardian—surges outward, piercing the darkness.\n\nThe Blight screams. It's a sound that tears at reality itself. But your magic holds firm.\n\nYou sacrifice something precious—your connection to peace, your ability to rest—channeling it all into the banishment magic.\n\nThe darkness is pushed back. Not destroyed, but driven far away. The seal becomes unbreakable.\n\nYou stumble back from the seal, changed forever. The price was high. But the valley is safe.",
+      "choices": [
+        {
+          "text": "Accept your role as eternal guardian",
+          "nextNode": "node73"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node63": {
+      "id": "node63",
+      "title": "The Blight Speaks",
+      "text": "The voice responds: 'I am hunger. I am entropy. I am the darkness that devours all light. Your ancestor sealed me away, but seals break. Magic fades. Guardians die.'\n\nIt pauses, and you feel its ancient malevolence. 'I am inevitable.'\n\nYou must act now.",
+      "choices": [
+        {
+          "text": "Repair the seal and cut off communication",
+          "nextNode": "node51"
+        },
+        {
+          "text": "Challenge it to combat",
+          "nextNode": "node74"
+        },
+        {
+          "text": "Flee and gather allies",
+          "nextNode": "node22"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node64": {
+      "id": "node64",
+      "title": "A Dark Bargain",
+      "text": "You attempt to negotiate with the Blight, offering it part of the valley if it spares the rest. The entity considers, and for a moment, you think you might succeed.\n\nThen, it laughs—a sound like the end of the world. 'Your offer amuses me, guardian. But I will take all, not a portion. Preparation or no preparation, I will have everything.'\n\nYou realize negotiation was futile. The Blight is beyond reason.",
+      "choices": [
+        {
+          "text": "Seal yourself in with the Blight to trap it here",
+          "nextNode": "node75"
+        },
+        {
+          "text": "Flee and gather all your allies for a final battle",
+          "nextNode": "node76"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node65": {
+      "id": "node65",
+      "title": "A Lone Guardian",
+      "text": "Evelyn nods slowly, respect and sadness in her eyes. 'Your grandfather had that courage too. But he learned—as you must—that even guardians need allies.'\n\nShe grasps both your shoulders. 'Go. Fight if you must. But know that there are others who will stand with you. You need not be alone.'",
+      "choices": [
+        {
+          "text": "Accept the offer of allies",
+          "nextNode": "node46"
+        },
+        {
+          "text": "Still insist on facing it alone",
+          "nextNode": "node77"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node66": {
+      "id": "node66",
+      "title": "Other Guardians",
+      "text": "Evelyn considers. 'Not guardians by bloodline. But there are those with guardian potential—strong spirits, deep connections to the land. Some of them might awaken if the valley is truly threatened.'\n\nShe pauses. 'And then there's Elliott... he has more magical sensitivity than most humans. He might be able to anchor magic in ways we cannot.'",
+      "choices": [
+        {
+          "text": "Attempt to awaken guardian potential in others",
+          "nextNode": "node46"
+        },
+        {
+          "text": "Focus on gathering allies as they are",
+          "nextNode": "node46"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node67": {
+      "id": "node67",
+      "title": "The Sacrifice",
+      "text": "You agree to perform the banishment ritual if the need arises. Evelyn leads you to the church vault where the ancient grimoire waits. As you read the ritual, you understand the true cost: the guardian must offer their most precious thing.\n\nFor some, it's their life. For others, it might be their magic, their memory, or their ability to love.\n\nYou vow to pay whatever price is necessary to save the valley.",
+      "choices": [
+        {
+          "text": "Prepare for the final battle",
+          "nextNode": "node60"
+        },
+        {
+          "text": "Confide in your closest ally about the cost",
+          "nextNode": "node78"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node68": {
+      "id": "node68",
+      "title": "Your Grandfather's Things",
+      "text": "Evelyn brings you to a small room where your grandfather's belongings are kept. You find: his journal (which you may or may not have read), his tools, and a second necklace identical to the one you found.\n\nBut most importantly, you find a letter addressed to you in your grandfather's handwriting. With trembling hands, you open it.",
+      "choices": [
+        {
+          "text": "Read the letter",
+          "nextNode": "node79"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node69": {
+      "id": "node69",
+      "title": "Descent into Darkness",
+      "text": "You and your allies descend into the mines. With each step downward, the temperature drops. The air grows thick with malevolence. But you're together, and that gives you strength.\n\nWhen you reach the seal chamber, you see it: the cracks are deeper than before. Something massive pushes from the other side. The seal is failing faster than expected.\n\nYou have moments to act.",
+      "choices": [
+        {
+          "text": "Immediately attempt the banishment ritual",
+          "nextNode": "node80"
+        },
+        {
+          "text": "Repair the seal with your allies' help",
+          "nextNode": "node81"
+        },
+        {
+          "text": "Confront the entity directly",
+          "nextNode": "node82"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node70": {
+      "id": "node70",
+      "title": "The Ritual of Power",
+      "text": "You gather with your allies in a circle. As you chant an ancient ritual, power flows through all of you. Love, courage, determination—all magnified and unified.\n\nWhen it's complete, you feel transformed. Stronger. More connected. Whatever you face in the darkness ahead, you face it as one.",
+      "choices": [
+        {
+          "text": "Descend into the mines together",
+          "nextNode": "node69"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node71": {
+      "id": "node71",
+      "title": "Life With Guardianship",
+      "text": "You build a life on the farm, knowing you're a guardian. With your lover (if you have one), you find joy and normalcy between moments of magical work. You maintain the farm's defenses, care for the spring, monitor the seal.\n\nYears pass peacefully. The townspeople never fully understand what you do, but they know—on some level—that you protect them.\n\nYou've found your purpose. The farm is your home, and protecting the valley is your calling.\n\n**The End: The Guardian's Farm**\n\n*You accepted your role and found peace in purpose. The darkness sleeps, and you stand watch.*",
+      "isEnding": true,
+      "endingType": "good",
+      "choices": []
+    },
+    "node72": {
+      "id": "node72",
+      "title": "Preparing for War",
+      "text": "You don't rest. Instead, you begin gathering resources for the final confrontation. You consult ancient texts. You train with your allies. You strengthen every ward and defense you can.\n\nWithin months, you and your team are ready. The Blight may be sealed, but you're determined it will never break free again.\n\nIt's time for the banishment ritual.",
+      "choices": [
+        {
+          "text": "Gather your allies for the final assault",
+          "nextNode": "node60"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node73": {
+      "id": "node73",
+      "title": "The Eternal Guardian",
+      "text": "The Blight is banished. The seal is eternal. But you are forever changed.\n\nYou remain on the farm, tending it with your lover (if you found one). But part of you is always attuned to the magical realm, always vigilant, always ready.\n\nYou never truly rest. The weight of the sacrifice you made—the peace you gave up—is a constant presence.\n\nBut the valley is safe. Your sacrifice ensured it.\n\n**The End: The Eternal Guardian**\n\n*You saved the valley at great cost to yourself. But that was always the guardian's burden.*",
+      "isEnding": true,
+      "endingType": "bittersweet",
+      "choices": []
+    },
+    "node74": {
+      "id": "node74",
+      "title": "Combat with the Darkness",
+      "text": "You challenge the Blight directly, and it accepts with terrible joy. The seal cracks further as the entity surges against it. Magic crackles around you as you fight—not with weapons, but with will and power.\n\nYou're strong, but the Blight is ancient and vast. You're being overwhelmed.",
+      "choices": [
+        {
+          "text": "Call for your allies to help",
+          "nextNode": "node83"
+        },
+        {
+          "text": "Push harder and risk everything",
+          "nextNode": "node84"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node75": {
+      "id": "node75",
+      "title": "The Sealed Sacrifice",
+      "text": "You make a desperate decision. You collapse the caves around yourself and the Blight, sealing yourself inside with the entity.\n\n'Run!' you shout to anyone who might hear you. 'Seal the entrance!'\n\nYou're trapped with the Blight, but so is it. You engage it in endless combat—neither of you dying, neither of you winning, both locked in eternal stalemate.\n\nYears pass. Centuries pass. You become less human, more spirit, locked in eternal battle with darkness.\n\n**The End: The Sealed Champion**\n\n*You sacrificed everything—your body, your time, your humanity—to trap the darkness forever. History will never know what you did.*",
+      "isEnding": true,
+      "endingType": "sacrifice",
+      "choices": []
+    },
+    "node76": {
+      "id": "node76",
+      "title": "The Final Army",
+      "text": "You flee the mines and gather every ally you can. Abigail, Sebastian, Elliott, Evelyn—all join you. Word spreads through the town, and even those without magic stand with you.\n\nYou return to the mines as a force. The Blight may be ancient, but it has never faced a unified town determined to protect their home.\n\nThe final battle begins.",
+      "choices": [
+        {
+          "text": "Confront the Blight together",
+          "nextNode": "node82"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node77": {
+      "id": "node77",
+      "title": "The Lone Fight",
+      "text": "You insist on facing the Blight alone. Evelyn doesn't try to stop you—she's too wise for that. She simply offers you the grimoire for the banishment ritual.\n\nYou enter the mines alone, carrying only your courage and your magic. You face the entity in single combat.\n\nThe battle is epic and terrifying. You're pushed to your absolute limit.",
+      "choices": [
+        {
+          "text": "Perform the banishment ritual",
+          "nextNode": "node85"
+        },
+        {
+          "text": "Call for help at the last moment",
+          "nextNode": "node83"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node78": {
+      "id": "node78",
+      "title": "The Confession",
+      "text": "You find your lover (Abigail, Sebastian, or Elliott) and tell them about the banishment ritual and its cost. They hold you close.\n\n'Whatever you have to give, you won't give it alone,' they promise. 'We'll find another way, or we'll face it together.'\n\nTheir support strengthens your resolve.",
+      "choices": [
+        {
+          "text": "Gather all your allies and plan together",
+          "nextNode": "node60"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node79": {
+      "id": "node79",
+      "title": "Your Grandfather's Message",
+      "text": "The letter reads:\n\n'My dear grandchild,\n\nIf you're reading this, I am gone, and the valley needs you. I did what I could, but seals are temporary. The darkness will return.\n\nI want you to know: I never regretted my choice to be a guardian. Yes, there was sacrifice. Yes, there was pain. But I protected something precious—this valley, these people, your future.\n\nYou don't have to be a guardian if you don't wish it. Choose your own path. But if you do accept this mantle, know that love will be your greatest strength. Surround yourself with people you care about. Let them help you. Let them stand beside you.\n\nThe darkness is ancient, but hope is eternal.\n\nWith all my love and belief in you,\nGrandfather'",
+      "choices": [
+        {
+          "text": "Embrace your role as guardian with new understanding",
+          "nextNode": "node38"
+        },
+        {
+          "text": "Feel the weight of expectation, but choose your own path",
+          "nextNode": "node86"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node80": {
+      "id": "node80",
+      "title": "The Banishment Performed",
+      "text": "With the grimoire in hand and your allies channeling energy to you, you perform the banishment ritual. The words of power flow from your lips in a language older than human civilization.\n\nThe seal explodes outward with light. The Blight shrieks as it's forced back, compressed, banished to a realm beyond the valley.\n\nThe darkness is gone. Truly gone.\n\nYou collapse, your greatest power spent. But you live. The valley is saved.",
+      "choices": [
+        {
+          "text": "Begin the restoration—return home",
+          "nextNode": "node87"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node81": {
+      "id": "node81",
+      "title": "The Seal Reforged",
+      "text": "Your allies form a circle around you as you place your hands on the seal. Their power flows into you—love, courage, determination. The seal's cracks seal shut. The magic reinforces itself.\n\nBut you all feel it: this seal won't hold forever either. Not without a full banishment.\n\nFor now, though, the valley is safe.",
+      "choices": [
+        {
+          "text": "Return home and plan for the banishment",
+          "nextNode": "node72"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node82": {
+      "id": "node82",
+      "title": "The Final Confrontation",
+      "text": "The seal shatters. The Blight emerges—not fully, but enough to manifest before you. It's a creature of nightmare and hunger, vast and terrible.\n\nYou and your allies stand together. This is the moment everything has been leading toward.\n\nMagic crackles. Love and courage rise up against darkness. The battle is joined.",
+      "choices": [
+        {
+          "text": "Use the banishment ritual",
+          "nextNode": "node80"
+        },
+        {
+          "text": "Attempt to seal and contain it again",
+          "nextNode": "node88"
+        },
+        {
+          "text": "Sacrifice yourself to destroy it",
+          "nextNode": "node89"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node83": {
+      "id": "node83",
+      "title": "Allies Arrive",
+      "text": "Your cry echoes through the mines. Abigail, Sebastian, Elliott, Evelyn—they all come. Together, your combined power surges against the Blight.\n\nWhat was impossible alone becomes possible together. Your allies fill the gaps in your defense, support your magic, and push back the darkness.\n\nTogether, you begin to win.",
+      "choices": [
+        {
+          "text": "Complete the banishment",
+          "nextNode": "node80"
+        },
+        {
+          "text": "Seal the Blight permanently",
+          "nextNode": "node88"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node84": {
+      "id": "node84",
+      "title": "The Breaking Point",
+      "text": "You push harder, drawing on magic you didn't know you possessed. But it costs you. Your body begins to break. Blood flows. Consciousness wavers.\n\nYou're dying. And the Blight is still winning.",
+      "choices": [
+        {
+          "text": "Accept the sacrifice and lock the Blight away with you",
+          "nextNode": "node75"
+        },
+        {
+          "text": "Call desperately for help",
+          "nextNode": "node83"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node85": {
+      "id": "node85",
+      "title": "Solitary Banishment",
+      "text": "Alone in the darkness, you channel every ounce of your being into the banishment ritual. Your blood, your magic, your will—all pour into the spell.\n\nThe Blight writhes. It fights back with terrible ferocity. But you don't stop. You can't stop.\n\nYour vision blackens as the ritual reaches its apex. You don't know if you succeed or fail before consciousness leaves you.",
+      "choices": [
+        {
+          "text": "Discover your fate",
+          "nextNode": "node90"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node86": {
+      "id": "node86",
+      "title": "Your Own Path",
+      "text": "You honor your grandfather's memory, but you refuse to be bound by expectations. You choose your own way forward.\n\nYou learn what magic you can from Evelyn. You strengthen the farm's defenses. You care for the land and the townspeople. But you live for yourself, not just for duty.\n\nYou find balance between guardian and person. It's harder, messier, but it feels right.",
+      "choices": [
+        {
+          "text": "When crisis comes, face it on your own terms",
+          "nextNode": "node42"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node87": {
+      "id": "node87",
+      "title": "Victory and New Beginning",
+      "text": "You emerge from the mines to find the sun rising on a new day. The darkness is gone. The land feels lighter, freer.\n\nYour allies embrace you. Your lover (if you have one) kisses you. The townspeople emerge from their homes, sensing the change.\n\nThe valley is free. And you—you are finally just a farmer, not a guardian.\n\nYou return to your farm and begin truly building a life here. The dark past is behind you. The future is bright.\n\n**The End: The Farmer's Victory**\n\n*You saved the valley and won your freedom. The curse is broken; a new era begins.*",
+      "isEnding": true,
+      "endingType": "good",
+      "choices": []
+    },
+    "node88": {
+      "id": "node88",
+      "title": "The Final Seal",
+      "text": "Rather than banish the Blight entirely, you and your allies work together to bind it—more powerfully than ever before. You create a new seal, reinforced by the love and sacrifice of everyone present.\n\nThe Blight is pushed back. The seal holds firm.\n\nBut you understand: this seal will hold for centuries, not forever. One day, another generation will face this choice.",
+      "choices": [
+        {
+          "text": "Accept your role as guardian and move forward",
+          "nextNode": "node71"
+        }
+      ],
+      "isEnding": false,
+      "endingType": null
+    },
+    "node89": {
+      "id": "node89",
+      "title": "The Ultimate Sacrifice",
+      "text": "You see the only path to victory: your death. You gather all your remaining magic and allies' support, and you channel it into one final, devastating attack.\n\nThe Blight shrieks as it's torn apart by pure power. But the cost is your life. You fall, your body fading as your magic dissipates.\n\nYour allies catch you as you fall. Your lover (if you have one) holds your hand as your eyes close.\n\nThe valley is safe. You saved them all.\n\n**The End: The Farmer's Sacrifice**\n\n*You gave everything to save the valley you came to love. Your name will be remembered forever.*",
+      "isEnding": true,
+      "endingType": "heroic_sacrifice",
+      "choices": []
+    },
+    "node90": {
+      "id": "node90",
+      "title": "Awakening",
+      "text": "You awaken days later in Evelyn's home. Your allies surround your bed, tears of relief in their eyes.\n\n'You did it,' Evelyn whispers. 'The Blight is banished. The seal is eternal. The valley is free.'\n\nYou're alive. Exhausted, changed forever, but alive.\n\nYou survived. You won. Alone, you still found a way.\n\n**The End: The Solitary Victor**\n\n*Against all odds, you faced the darkness alone and emerged victorious. Legend speaks of your courage for generations.*",
+      "isEnding": true,
+      "endingType": "good",
+      "choices": []
+    }
+  }
+}
