@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:eblong.com)",
+      "Bash(git ls-tree:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(for v in v1 v2 v3 v4)",
+      "Bash(do echo \"===== $v =====\")",
+      "Bash(done)"
+    ]
+  }
+}
