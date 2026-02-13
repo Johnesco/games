@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>John Escobedo — Interactive Resume | Quality & Business Analyst</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #1a1a2e; color: #c8c8c8; font-family: 'Courier New', Consolas, Monaco, monospace; font-size: 16px; line-height: 1.6; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+#header { background: #0f0f23; border-bottom: 1px solid #4a4a6a; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+#header-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+#header h1 { font-size: 20px; color: #e8d44d; margin: 0; }
+#subtitle { font-size: 14px; color: #8888aa; }
+#header-right { display: flex; gap: 8px; }
+.header-btn { background: transparent; border: 1px solid #4a4a6a; color: #8888aa; padding: 4px 12px; font-family: inherit; font-size: 13px; cursor: pointer; border-radius: 3px; transition: all 0.15s; }
+.header-btn:hover { border-color: #e8d44d; color: #e8d44d; }
+#contact-bar { background: #0f0f23; border-bottom: 2px solid #4a4a6a; padding: 6px 16px; font-size: 13px; color: #6a9fb5; flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.contact-sep { color: #333355; margin: 0 4px; }
+#output-area { flex: 1; overflow-y: auto; padding: 16px 16px 8px; scroll-behavior: smooth; }
+#nav-bar { background: #0f0f23; border-top: 2px solid #4a4a6a; padding: 10px 16px; flex-shrink: 0; }
+#nav-label { color: #555577; font-size: 12px; margin-bottom: 6px; }
+#nav-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.nav-btn { background: transparent; border: 2px solid #e8d44d; color: #e8d44d; padding: 6px 14px; font-family: inherit; font-size: 14px; cursor: pointer; border-radius: 4px; transition: all 0.15s; }
+.nav-btn:hover { background: #e8d44d; color: #1a1a2e; }
+.nav-btn.visited { border-color: #444466; color: #666688; }
+.nav-btn.visited:hover { background: #444466; color: #c8c8c8; }
+#hint-line { color: #6a9fb5; font-size: 13px; margin-top: 8px; font-style: italic; min-height: 1.3em; }
+#artifact-tracker { background: #0f0f23; padding: 4px 16px; font-size: 12px; color: #555577; flex-shrink: 0; display: none; }
+#input-area { background: #0f0f23; border-top: 1px solid #333355; padding: 6px 16px; display: flex; align-items: center; flex-shrink: 0; }
+.prompt-char { color: #666688; margin-right: 8px; font-size: 14px; }
+#cmd { flex: 1; background: transparent; border: none; color: #f0f0f0; font-family: inherit; font-size: 14px; outline: none; caret-color: #e8d44d; }
+#cmd::placeholder { color: #444466; }
+.paragraph { margin-bottom: 8px; }
+.room-title { color: #e8d44d; font-weight: bold; font-size: 18px; margin-bottom: 2px; }
+.system { color: #6a9fb5; } .error { color: #d14; }
+.artifact-quiet { color: #666688; font-size: 13px; }
+.win-msg { color: #e8d44d; font-weight: bold; font-size: 17px; }
+.item-desc { color: #bd93f9; } .prompt-echo { color: #666688; font-size: 14px; }
+.divider { border-top: 1px solid #333355; margin: 10px 0; }
+.jb { border-left: 3px solid #4a4a6a; padding: 6px 0 6px 12px; margin: 10px 0; }
+.jh { color: #e8d44d; font-weight: bold; }
+.jm { color: #8888aa; font-size: 14px; margin-bottom: 2px; }
+.jd { color: #c8c8c8; }
+@media (max-width: 600px) {
+  body { font-size: 14px; }
+  #header { flex-direction: column; align-items: flex-start; gap: 4px; }
+  #header-left { flex-direction: column; gap: 2px; }
+  #header h1 { font-size: 17px; }
+  #contact-bar { font-size: 11px; padding: 5px 12px; }
+  .nav-btn { font-size: 13px; padding: 5px 10px; }
+  #output-area { padding: 12px; }
+}
+</style>
+</head>
+<body>
+<div id="header">
+  <div id="header-left">
+    <h1>John Escobedo</h1>
+    <span id="subtitle">Quality &amp; Business Analyst</span>
+  </div>
+  <div id="header-right">
+    <button class="header-btn" id="skills-btn">Skills</button>
+    <button class="header-btn" id="contact-btn">Contact</button>
+  </div>
+</div>
+<div id="contact-bar">
+  <span>letmeshowyou@gmail.com</span>
+  <span class="contact-sep">|</span>
+  <span>(512) 299-3269</span>
+  <span class="contact-sep">|</span>
+  <span>linkedin.com/in/johnesco</span>
+  <span class="contact-sep">|</span>
+  <span>Manor, TX</span>
+</div>
+<div id="output-area"></div>
+<div id="nav-bar">
+  <div id="nav-label">Fast travel:</div>
+  <div id="nav-buttons"></div>
+  <div id="hint-line"></div>
+</div>
+<div id="artifact-tracker"></div>
+<div id="input-area">
+  <span class="prompt-char">&gt;</span>
+  <input type="text" id="cmd" placeholder="Type a command..." autocomplete="off" autofocus>
+</div>
+<script>
+// ============================================================
+// JOHN ESCOBEDO — Interactive Resume
+// Resume-first, with hidden interactive fiction layer
+// ============================================================
+const j = (h,m,d) => `<div class="jb"><div class="jh">${h}</div><div class="jm">${m}</div><div class="jd">${d}</div></div>`;
+
+const ROOMS = {
+entrance: {
+  name: 'Career Center Entrance',
+  desc: 'You stand before a gleaming glass building reflecting the Austin sun. A brass plaque reads "JOHN ESCOBEDO CAREER CENTER &mdash; Est. 1993." The automatic doors stand open, beckoning you inside.' +
+    j('Career Summary &mdash; Quality &amp; Business Analyst', 'Manor, TX | 18+ Years of Experience',
+      'Requirements documentation, process analysis, UAT leadership, and cross-functional collaboration. Built QA and documentation frameworks from scratch, led Agile transitions, and served as SME translating complex business needs into testable, actionable requirements. Trilingual communicator (English, Spanish, ASL).') +
+    'The warm glow of the Career Center beckons from within.',
+  dest: [{id:'lobby', name:'Back to Overview'}],
+  exits: {n:'lobby', north:'lobby', e:'lobby', east:'lobby', u:'lobby', up:'lobby'}
+},
+lobby: {
+  name: 'Career Overview',
+  desc: j('Quality &amp; Business Analyst', 'Manor, TX | 18+ Years of Experience',
+      'Requirements documentation, process analysis, UAT leadership, and cross-functional collaboration. Built QA and documentation frameworks from scratch, led Agile transitions, and served as SME translating complex business needs into testable, actionable requirements. Trilingual communicator (English, Spanish, ASL).') +
+    'Type a direction to explore my career in detail.<br><br>' +
+    '<b style="color:#e8d44d">East</b> &mdash; Education Wing: a lifelong commitment to learning, from computer science to ASL.<br>' +
+    '<b style="color:#e8d44d">North</b> &mdash; Creative District: art, animation, design, and teaching.<br>' +
+    '<b style="color:#e8d44d">Down</b> &mdash; QA Dungeon: 18+ years of quality assurance and testing.<br>' +
+    '<b style="color:#e8d44d">West</b> &mdash; Performance Hall: entertainment, events, and coordination.',
+  dest: [
+    {id:'education', name:'Education Wing'},
+    {id:'creative', name:'Creative District'},
+    {id:'dungeon_landing', name:'QA Dungeon'},
+    {id:'performance', name:'Performance Hall'}
+  ],
+  exits: {e:'education', east:'education', n:'creative', north:'creative', d:'dungeon_landing', down:'dungeon_landing', w:'performance', west:'performance', s:'entrance', south:'entrance'}
+},
+education: {
+  name: 'Education Wing',
+  desc: 'A bright corridor lined with diplomas, certificates, and student work from five institutions spanning 1993 to 2017. The air smells of fresh textbooks and dry-erase markers. An impressive commitment to lifelong learning &mdash; from computer science and fine art to video editing and American Sign Language.<br><br>Classrooms branch off in every direction, each representing a different chapter.',
+  dest: [
+    {id:'san_jacinto', name:'San Jacinto Classroom'},
+    {id:'art_institute', name:'Art Institute Studio'},
+    {id:'vista_college', name:'Vista College Lab'},
+    {id:'asl_academy', name:'ASL Academy'},
+    {id:'lobby', name:'Back to Overview'}
+  ],
+  exits: {n:'san_jacinto', north:'san_jacinto', e:'art_institute', east:'art_institute', s:'vista_college', south:'vista_college', u:'asl_academy', up:'asl_academy', w:'lobby', west:'lobby'}
+},
+san_jacinto: {
+  name: 'San Jacinto Classroom',
+  desc: 'A computer lab circa 1993, complete with chunky CRT monitors and the gentle hum of cooling fans. A whiteboard displays "CS 101" and "Fine Art Fundamentals." Programming flowcharts hang next to figure drawing exercises &mdash; an interesting combination that would define a career.' +
+    j('San Jacinto College &mdash; Computer Science &amp; Fine Art', 'Pasadena, TX | 1993&ndash;1995',
+      'Where it all began. The foundation of a career bridging the technical and the creative. Studies in computer science fundamentals and fine art laid the groundwork for everything that followed.'),
+  dest: [{id:'education', name:'Back to Education Wing'}],
+  exits: {s:'education', south:'education'}
+},
+art_institute: {
+  name: 'Art Institute Studio',
+  desc: 'A design studio filled with drafting tables, typography specimens, and a single SGI workstation running 3D Studio Max. Samples of student work line the walls: typography layouts, figure studies, and charmingly primitive early 3D renders.' +
+    j('Art Institute of Houston &mdash; Fine Art, Typography, Layout &amp; 3D Max', 'Houston, TX | 1995&ndash;1996',
+      'Where technical precision met artistic vision. Studies spanning traditional fine art, digital typography, layout design, and early 3D modeling on professional equipment.'),
+  dest: [{id:'education', name:'Back to Education Wing'}],
+  exits: {w:'education', west:'education'}
+},
+vista_college: {
+  name: 'Vista College Lab',
+  desc: 'A video editing suite in Berkeley, California. Multiple monitors display timelines filled with clips. A life drawing easel stands in the corner. A teaching assistant\'s desk near the door is covered in student portfolios and grading rubrics.' +
+    j('Vista College &mdash; Video Editing &amp; Life Drawing', 'Berkeley, CA | 2001&ndash;2002 | GPA: 3.143',
+      'Studies in video editing and life drawing. Also served as Teaching Assistant, tutoring students in Adobe Photoshop and Illustrator &mdash; the first taste of mentoring others through technology.'),
+  dest: [{id:'education', name:'Back to Education Wing'}],
+  exits: {n:'education', north:'education'}
+},
+asl_academy: {
+  name: 'ASL Academy',
+  desc: 'A quiet classroom where communication happens with the hands, face, and body. ASL handshape charts and Deaf culture posters cover the walls. Unlike other rooms, this one is intentionally silent. A grade report pinned to a corkboard shows a perfect 4.0 GPA.' +
+    j('ASL Studies &mdash; American Sign Language', 'Austin, TX | 2008&ndash;2017',
+      'ASL School (2008&ndash;12) and Austin Community College (2015&ndash;17). ASL I through IV plus Visual Gestural Communication, all with a perfect 4.0 GPA. Years of dedication to bridging communication gaps &mdash; learning the language and immersing in Deaf culture to truly understand users.'),
+  dest: [{id:'education', name:'Back to Education Wing'}],
+  exits: {d:'education', down:'education'}
+},
+creative: {
+  name: 'Creative District',
+  desc: 'You emerge into a colorful open space that feels part art gallery, part co-working space. Paint-splattered easels share floor space with Wacom tablets and light tables. The creative energy is palpable &mdash; this wing celebrates the intersection of art, animation, design, and teaching.',
+  dest: [
+    {id:'animation', name:'Animation Workshop'},
+    {id:'design_studio', name:'Design Studio'},
+    {id:'teaching_hall', name:'Teaching Hall'},
+    {id:'lobby', name:'Back to Overview'}
+  ],
+  exits: {n:'animation', north:'animation', e:'design_studio', east:'design_studio', w:'teaching_hall', west:'teaching_hall', s:'lobby', south:'lobby'}
+},
+animation: {
+  name: 'Animation Workshop',
+  desc: 'Light tables line the walls, and a Cintiq display shows a half-finished character animation. Cels hang from a drying line overhead. Signs for "Wild Brain Animation" and "Diva Productions" mark this as professional territory.' +
+    j('Wild Brain Animation &mdash; Intern', 'San Francisco, CA | 2002',
+      'Hands-on experience in a professional animation studio. Digital coloring workflows and traditional animation using professional equipment.') +
+    j('Diva Productions &mdash; Animator', 'Austin, TX | 2004&ndash;2005',
+      'Owned the full animation production pipeline for educational children\'s content: writing scripts, creating storyboards, building animatics, and delivering final animations.'),
+  dest: [{id:'creative', name:'Back to Creative District'}],
+  exits: {s:'creative', south:'creative'}
+},
+design_studio: {
+  name: 'Design Studio',
+  desc: 'A multi-era design studio spanning the late \'90s through early 2000s. On one desk, QuarkXPress layouts for a Spanish-language newspaper. On another, early web graphics for an eLearning platform. A Rich Media research station occupies the far wall.' +
+    j('Mediaplex &mdash; Rich Media Researcher', 'San Francisco, CA | 1999&ndash;2000',
+      'Researched emerging technologies and translated technical specifications into actionable insights for product teams.') +
+    j('DigitalThink &mdash; Graphic Designer', 'San Francisco, CA | 2000',
+      'Created eLearning graphics and course materials for an online learning platform.') +
+    j('Computer Discovery Center &mdash; Digital Art Instructor', 'Houston, TX | 2002&ndash;2004',
+      'Taught digital art and photo editing, bridging creative skills with technical instruction.') +
+    j('El Dia Daily Newspaper &mdash; Graphic Designer', 'Houston, TX | 2004',
+      'Layout and design for a Spanish-language daily. All work and communication conducted in Spanish.'),
+  dest: [{id:'creative', name:'Back to Creative District'}],
+  exits: {w:'creative', west:'creative'}
+},
+teaching_hall: {
+  name: 'Teaching Hall',
+  desc: 'A warm, well-lit classroom with rows of computers and a large projection screen. Student work is displayed on every wall. Thousands of students have passed through here, each leaving a little more skilled.' +
+    j('Houston Multimedia Center &mdash; Instructor', 'Houston, TX | 1997&ndash;1998',
+      'Curriculum development and instruction in Adobe PageMill, HTML, Photoshop, and After Effects.') +
+    j('Bay Area Video Coalition &mdash; Instructor', 'San Francisco, CA | 1999&ndash;2000',
+      'Expert-level instruction in After Effects and Dreamweaver. Multi-session workshops combining lecture, demo, and hands-on practice.') +
+    j('Tele Atlas &mdash; Trainer', 'Menlo Park, CA | 2000&ndash;2001',
+      'Developed training programs on data collection methodologies and evaluated trainee performance.') +
+    j('Media Alliance &mdash; Instructor &amp; Lab Manager', 'San Francisco, CA | 2001&ndash;2002',
+      'Workshops on Microsoft Office, Photoshop, and web fundamentals. Managed the computer lab facility.'),
+  dest: [{id:'creative', name:'Back to Creative District'}],
+  exits: {e:'creative', east:'creative'}
+},
+dungeon_landing: {
+  name: 'QA Dungeon Landing',
+  desc: 'You descend a spiral staircase into the depths below the Career Center. A sign reads "THE QA DUNGEON &mdash; The Great Underground Empire of Quality Assurance." The air is thick with the tension of unreproduced bugs and ambiguous requirements.<br><br>Eight chambers branch off in every direction, each holding years of QA expertise. In smaller text below the sign: "Abandon all bugs, ye who enter here."',
+  dest: [
+    {id:'game_testing', name:'Game Testing Cavern'},
+    {id:'virtual_worlds', name:'Virtual Worlds Chamber'},
+    {id:'battle_arena', name:'Battle Arena'},
+    {id:'healthcare', name:'Healthcare Corridor'},
+    {id:'ecommerce', name:'E-Commerce Lab'},
+    {id:'assessment', name:'Assessment Chamber'},
+    {id:'va_vault', name:'The VA Vault'},
+    {id:'robotics_lab', name:'Robotics Lab'},
+    {id:'lobby', name:'Back to Overview'}
+  ],
+  exits: {n:'game_testing', north:'game_testing', e:'virtual_worlds', east:'virtual_worlds', s:'battle_arena', south:'battle_arena', w:'healthcare', west:'healthcare', u:'lobby', up:'lobby'}
+},
+game_testing: {
+  name: 'Game Testing Cavern',
+  desc: 'A cavern filled with gaming hardware from every era. Stacks of game discs tower precariously. Test matrices annotated in red ink cover the walls. A desk overflows with 100+ mobile devices of every make and model. Two company banners hang from the ceiling.' +
+    j('Super Happy Fun Fun &mdash; QA Tester', 'Austin, TX | 2006&ndash;2007',
+      'Cross-platform compatibility testing across 100+ unique mobile device models. Documented platform-specific bugs in Mantis. Quality oversight across the full product lifecycle.') +
+    j('Aspyr Media &mdash; QA Tester', 'Austin, TX | 2006',
+      'QA for high-profile Mac game ports including Call of Duty 2 and Civilization IV. Authored detailed test plans, collaborated with dev to isolate Mac-specific issues, and caught localization errors through exhaustive proofreading.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {s:'dungeon_landing', south:'dungeon_landing'}
+},
+virtual_worlds: {
+  name: 'Virtual Worlds Chamber',
+  desc: 'Holographic displays show the virtual world of Second Life: avatars flying, building, and socializing across an infinite digital frontier. Three promotion certificates are framed on the wall, each one a step up.' +
+    j('Linden Lab / Second Life &mdash; First Responder &rarr; Community Ops &rarr; QA Analyst', 'San Francisco (Remote) | 2007&ndash;2010',
+      'Three promotions in three years. Started by managing in-world emergencies and enforcing Terms of Service. Identified operational inefficiencies and built custom diagnostic tools. Established customer support processes. Promoted to QA Analyst for exceptional analytical and diagnostic skills. A journey from support to QA proving the value of understanding systems from the user\'s perspective.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {w:'dungeon_landing', west:'dungeon_landing'}
+},
+battle_arena: {
+  name: 'Battle Arena',
+  desc: 'An epic arena that could only be one place: the World of Warcraft support center at Blizzard Entertainment. Holographic displays show Azeroth in all its glory. A Game Master\'s console glows in the center, ready to resolve the next crisis.' +
+    j('Blizzard Entertainment &mdash; Game Master, World of Warcraft', 'Austin, TX | 2010&ndash;2011',
+      'Analyzed and documented cases of fraud and exploitation with detailed root cause reports. Provided compassionate support during emotionally charged escalations, restoring lost items and accounts. De-escalated frustrated users through patient listening. High-volume support via live chat and ticket systems.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {n:'dungeon_landing', north:'dungeon_landing'}
+},
+healthcare: {
+  name: 'Healthcare Corridor',
+  desc: 'A long, sterile corridor with the unmistakable feel of healthcare technology. HIPAA compliance notices line the walls. An accessibility testing station equipped with JAWS screen reader, VoiceOver, and a refreshable Braille display occupies one alcove.' +
+    j('DocbookMD &mdash; QA Analyst (Founding)', 'Austin, TX | 2012&ndash;2013',
+      'Founded the QA function for a HIPAA-compliant healthcare messaging app. Analyzed compliance requirements for secure patient health information. Grew the QA department from solo operation to a full team.') +
+    j('Communication Services for the Deaf &mdash; QA Analyst (Founding)', 'Austin, TX | 2013&ndash;2015',
+      'Developed inaugural QA process for an accessibility-focused video interpreting platform. Invested in learning ASL and Deaf cultural norms to truly understand user needs. Established the company\'s first quality assurance function.') +
+    j('EverlyWell &mdash; QA Analyst', 'Austin, TX | 2018',
+      'Established quality processes for a health tech startup\'s secure patient portal. Designed unified JIRA workflows and defined initial QA validation criteria.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {e:'dungeon_landing', east:'dungeon_landing'}
+},
+ecommerce: {
+  name: 'E-Commerce Lab',
+  desc: 'A bustling lab filled with monitors displaying e-commerce dashboards, coupon codes, and analytics graphs. Everything here is about conversion rates and data integrity. Company logos for Luna Data Solutions and RetailMeNot adorn the walls.' +
+    j('Luna Data Solutions / RetailMeNot &mdash; QA Analyst', 'Austin, TX | 2015&ndash;2017',
+      'Coordinated QA efforts across multiple teams for the high-visibility gift card feature launch. Engineered custom JavaScript tools to validate site-wide analytics and data integrity. Triaged live production issues during critical outages.') +
+    j('Heatwave Interactive (via Luna Data) &mdash; Test Lead', 'Austin, TX | 2011&ndash;2012',
+      'Promoted to Test Lead based on documentation quality and team leadership skills. Cross-platform testing and defect management.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {s:'dungeon_landing', south:'dungeon_landing'}
+},
+assessment: {
+  name: 'Assessment Chamber',
+  desc: 'A clean, modern room with assessment terminals lining the walls. Each screen displays aptitude tests and career matching algorithms. This is where YouScience helped students discover their potential.' +
+    j('YouScience &mdash; QA Analyst (Sole QA Resource)', 'Austin, TX | 2017&ndash;2018',
+      'Built comprehensive quality processes and test infrastructure for the education assessment platform. Created end-to-end test documentation. Introduced standardized user story and acceptance criteria templates that reduced ambiguity. The Agile journey continued at GeekSI, where John championed the transition from Waterfall to Agile, coaching distributed teams.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {w:'dungeon_landing', west:'dungeon_landing'}
+},
+va_vault: {
+  name: 'The VA Vault',
+  desc: 'A massive, secure vault lined with government documentation. Filing cabinets stretch floor to ceiling, each labeled with VA project codes. A requirements traceability matrix covers an entire wall, mapping every business need to its test coverage.' +
+    j('GeekSI / VA Projects &mdash; Sr. QA Test Lead, QA Analyst &amp; Scrum Master', 'Tallahassee, FL (Remote) | 2019&ndash;2025',
+      '6+ years across mission-critical VA healthcare projects. Go-to SME for the Traumatic Brain Injury module. Championed Waterfall-to-Agile transition. Drove standardization of testing practices across distributed teams. Led 508 accessibility compliance initiatives. Validated Cucumber/Selenium automation scripts. Built requirements traceability documentation mapping every business need to test coverage across web, mainframe, and mobile.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {s:'dungeon_landing', south:'dungeon_landing'}
+},
+robotics_lab: {
+  name: 'Robotics Lab',
+  desc: 'A cutting-edge robotics laboratory. A humanoid robot stands in a testing area, its joints articulated with eerie precision. Monitors display telemetry data, behavior logs, and troubleshooting protocols. This is the frontier &mdash; where QA meets the physical world.' +
+    j('Insight Global / Apptronik &mdash; Robot Tele-Operator', 'Austin, TX | 2025',
+      'Humanoid robot development. Translated observed robot behaviors into clear, actionable bug reports. Authored troubleshooting protocols and SOPs where none existed. Bridged operations and engineering communication. Reduced physical testing setup time by 75% through standardized preparation. Reached full productivity with minimal onboarding &mdash; because 18+ years of QA teaches you how to learn fast.'),
+  dest: [{id:'dungeon_landing', name:'Back to QA Dungeon'}],
+  exits: {w:'dungeon_landing', west:'dungeon_landing'}
+},
+performance: {
+  name: 'Performance Hall',
+  desc: 'You step into a vibrant entertainment venue. Stage lights cast colorful patterns across the floor. The sound system hums with potential. Three stages represent different facets of performance, entertainment, and event coordination &mdash; skills that translate directly to stakeholder engagement and project management.',
+  dest: [
+    {id:'dj_booth', name:'DJ Booth'},
+    {id:'karaoke', name:'Karaoke Stage'},
+    {id:'event_space', name:'Event Space'},
+    {id:'lobby', name:'Back to Overview'}
+  ],
+  exits: {n:'dj_booth', north:'dj_booth', s:'karaoke', south:'karaoke', w:'event_space', west:'event_space', e:'lobby', east:'lobby'}
+},
+dj_booth: {
+  name: 'DJ Booth',
+  desc: 'A professional DJ setup dominates this room: turntables, CDJs, a mixer, and speakers that could shake the building. Setlists for Danceversity, Dance International, and Synergy Dance Studio are pinned to a corkboard.' +
+    j('Freelance DJ &mdash; DJ &amp; Music Coordinator', 'Austin, TX | 2011&ndash;2012',
+      'Created setlists for Danceversity, Dance International, and Synergy Dance Studio. Adapted to various in-house sound systems and venue constraints. Reading the room, adapting on the fly, managing technical complexity while keeping the audience engaged &mdash; the same skills that make a great QA lead.'),
+  dest: [{id:'performance', name:'Back to Performance Hall'}],
+  exits: {s:'performance', south:'performance'}
+},
+karaoke: {
+  name: 'Karaoke Stage',
+  desc: 'A spotlight illuminates a karaoke stage, complete with a massive song catalog, professional monitors, and a mic that\'s still warm. The audience area is set up for maximum participation. This stage is still active &mdash; the setlist for tonight is being prepared.' +
+    j('Karaoke Host', 'Austin, TX | 2025&ndash;Present',
+      'The current gig. Coordinating event flow and timing while adapting to audience needs in real-time. Managing technical setup including sound systems, software, and troubleshooting. Creating an inclusive, welcoming atmosphere that encourages participation &mdash; not so different from facilitating a sprint review.'),
+  dest: [{id:'performance', name:'Back to Performance Hall'}],
+  exits: {n:'performance', north:'performance'}
+},
+event_space: {
+  name: 'Event Space',
+  desc: 'A multi-purpose event venue that once hosted weekly dance events. The layout is optimized for flow: a stage area, a dance floor, and a social zone. Photos on the wall show packed houses and happy dancers. The Kick Butt Coffee logo is prominently displayed.' +
+    j('Kick Butt Coffee &mdash; Event Coordinator &amp; Host', 'Austin, TX | 2011&ndash;2012',
+      'Organized and ran weekly events, coordinating DJs, venue logistics, and audience engagement. Set up technical infrastructure for seamless integration with house audio. Managed event promotion and community communication. Event coordination is project management in party form: stakeholders, timelines, logistics, and the ever-present risk of things going sideways.'),
+  dest: [{id:'performance', name:'Back to Performance Hall'}],
+  exits: {e:'performance', east:'performance'}
+}
+};
+
+const ARTIFACTS = {
+  trilingual_amulet: { name:'Trilingual Amulet', room:'asl_academy',
+    desc:'Glowing with three intertwined lights &mdash; one for English, one for Spanish, one for ASL. A testament to bridging communication gaps across cultures and communities.' },
+  enchanted_animation_cel: { name:'Enchanted Animation Cel', room:'animation',
+    desc:'A perfectly drawn frame shimmering with creative energy. From script to storyboard to final animation &mdash; the full pipeline, mastered.' },
+  golden_bug_report: { name:'Golden Bug Report', room:'game_testing',
+    desc:'Shimmering with the weight of thousands of meticulously documented defects. "Every bug found in testing is a bug the user never sees."' },
+  game_masters_badge: { name:"Game Master's Badge", room:'battle_arena',
+    desc:'Bearing the crest of Blizzard Entertainment. "For the Horde! (And also the Alliance. We do not discriminate in customer service.)"' },
+  accessibility_scroll: { name:'Accessibility Scroll', room:'healthcare',
+    desc:'Inscribed with the principles of inclusive design and 508 compliance. "508 compliance is not a checkbox &mdash; it is a commitment to ensuring everyone can participate."' },
+  agile_manifesto_tablet: { name:'Agile Manifesto Tablet', room:'assessment',
+    desc:'Carved from obsidian and etched with Agile principles. "Individuals and interactions over processes and tools &mdash; but good processes help individuals interact better."' },
+  crystal_requirements_document: { name:'Crystal Requirements Document', room:'va_vault',
+    desc:'Perfectly transparent and multifaceted &mdash; just like good requirements should be. "Requirements are the foundation. Everything else is commentary."' },
+  turntable_of_coordination: { name:'Turntable of Coordination', room:'dj_booth',
+    desc:'Spinning with perfect rhythm. "Every great event is a live test of coordination, timing, and user experience."' }
+};
+
+// Build artifact-room lookup
+const ART_BY_ROOM = {};
+for (const [id, a] of Object.entries(ARTIFACTS)) ART_BY_ROOM[a.room] = id;
+
+// Room name aliases for typed navigation
+const ALIASES = {};
+for (const [id, r] of Object.entries(ROOMS)) {
+  const names = [id, r.name.toLowerCase()];
+  if (id === 'lobby') names.push('career overview', 'overview', 'career center lobby', 'career center');
+  if (id === 'entrance') names.push('outside');
+  if (id === 'education') names.push('education wing');
+  if (id === 'creative') names.push('creative district');
+  if (id === 'dungeon_landing') names.push('dungeon', 'qa dungeon', 'dungeon landing');
+  if (id === 'performance') names.push('performance hall');
+  if (id === 'asl_academy') names.push('asl');
+  if (id === 'game_testing') names.push('game testing');
+  if (id === 'virtual_worlds') names.push('virtual worlds');
+  if (id === 'battle_arena') names.push('arena', 'battle arena');
+  if (id === 'healthcare') names.push('healthcare');
+  if (id === 'ecommerce') names.push('e-commerce', 'ecommerce');
+  if (id === 'assessment') names.push('assessment');
+  if (id === 'va_vault') names.push('va vault', 'vault');
+  if (id === 'robotics_lab') names.push('robotics');
+  if (id === 'dj_booth') names.push('dj', 'dj booth');
+  if (id === 'karaoke') names.push('karaoke');
+  if (id === 'event_space') names.push('event space', 'events');
+  if (id === 'san_jacinto') names.push('san jacinto');
+  if (id === 'art_institute') names.push('art institute');
+  if (id === 'vista_college') names.push('vista college', 'vista');
+  if (id === 'design_studio') names.push('design studio', 'design');
+  if (id === 'teaching_hall') names.push('teaching', 'teaching hall');
+  for (const n of names) ALIASES[n] = id;
+}
+
+// ---- STATE ----
+const game = { currentRoom: 'lobby', visitedRooms: new Set(), discoveredArtifacts: new Set(), won: false };
+
+// ---- DOM ----
+const $out = document.getElementById('output-area');
+const $nav = document.getElementById('nav-buttons');
+const $hint = document.getElementById('hint-line');
+const $in = document.getElementById('cmd');
+const $tracker = document.getElementById('artifact-tracker');
+
+// ---- OUTPUT ----
+function print(html, cls) {
+  const d = document.createElement('div');
+  d.className = 'paragraph ' + (cls || '');
+  d.innerHTML = html;
+  $out.appendChild(d);
+  $out.scrollTop = $out.scrollHeight;
+}
+function printDiv() {
+  const d = document.createElement('div');
+  d.className = 'divider';
+  $out.appendChild(d);
+}
+
+function updateArtifactTracker() {
+  if (game.discoveredArtifacts.size > 0) {
+    $tracker.style.display = 'block';
+    if (game.discoveredArtifacts.size < 8) {
+      $tracker.textContent = '\u2726 ' + game.discoveredArtifacts.size + '/8 artifacts found \u2014 keep exploring';
+    } else {
+      $tracker.textContent = '\u2726 All 8 artifacts found!';
+    }
+  }
+}
+
+// ---- NAVIGATION ----
+function navigateTo(roomId) {
+  if (!ROOMS[roomId]) return;
+  game.currentRoom = roomId;
+  const first = !game.visitedRooms.has(roomId);
+  game.visitedRooms.add(roomId);
+  $out.innerHTML = '';
+  displayRoom(roomId);
+  if (first && ART_BY_ROOM[roomId] && !game.discoveredArtifacts.has(ART_BY_ROOM[roomId])) {
+    const artId = ART_BY_ROOM[roomId];
+    game.discoveredArtifacts.add(artId);
+    const art = ARTIFACTS[artId];
+    print(`&#10022; Hidden artifact found: ${art.name} &mdash; "${art.desc}"`, 'artifact-quiet');
+    updateArtifactTracker();
+    if (game.discoveredArtifacts.size === 8 && !game.won) showWin();
+  }
+  renderNav();
+}
+
+function displayRoom(roomId) {
+  const room = ROOMS[roomId];
+  print(room.name, 'room-title');
+  print(room.desc);
+}
+
+function renderNav() {
+  const room = ROOMS[game.currentRoom];
+  $nav.innerHTML = '';
+  for (const dest of room.dest) {
+    const btn = document.createElement('button');
+    btn.className = 'nav-btn';
+    btn.textContent = dest.name;
+    if (game.visitedRooms.has(dest.id)) btn.classList.add('visited');
+    btn.addEventListener('click', () => navigateTo(dest.id));
+    $nav.appendChild(btn);
+  }
+  updateHint();
+}
+
+function updateHint() {
+  const uv = 24 - game.visitedRooms.size;
+  if (game.won) { $hint.textContent = "You've explored everything. Thanks for visiting!"; return; }
+  if (uv === 0) { $hint.textContent = "You've explored every section!"; return; }
+  const wings = [
+    {name:'Education Wing', hub:'education', rooms:['education','san_jacinto','art_institute','vista_college','asl_academy']},
+    {name:'Creative District', hub:'creative', rooms:['creative','animation','design_studio','teaching_hall']},
+    {name:'QA Dungeon', hub:'dungeon_landing', rooms:['dungeon_landing','game_testing','virtual_worlds','battle_arena','healthcare','ecommerce','assessment','va_vault','robotics_lab']},
+    {name:'Performance Hall', hub:'performance', rooms:['performance','dj_booth','karaoke','event_space']}
+  ];
+  for (const w of wings) {
+    const wuv = w.rooms.filter(r => !game.visitedRooms.has(r)).length;
+    if (wuv === w.rooms.length) {
+      const hints = {
+        'Education Wing': "You haven't explored the Education Wing yet \u2014 a lifelong journey of learning awaits.",
+        'Creative District': "The Creative District awaits \u2014 art, animation, design, and teaching.",
+        'QA Dungeon': "You haven't descended into the QA Dungeon yet \u2014 18+ years of quality assurance await.",
+        'Performance Hall': "The Performance Hall is unexplored \u2014 entertainment and coordination shine here."
+      };
+      $hint.textContent = hints[w.name]; return;
+    }
+  }
+  $hint.textContent = `${uv} section${uv!==1?'s':''} left to explore.`;
+}
+
+// ---- COMMANDS ----
+function findDestByInput(input) {
+  const low = input.toLowerCase().trim();
+  const room = ROOMS[game.currentRoom];
+  for (const dest of room.dest) {
+    if (dest.name.toLowerCase() === low) return dest.id;
+    if (ROOMS[dest.id].name.toLowerCase() === low) return dest.id;
+    if (dest.id === low) return dest.id;
+  }
+  const target = ALIASES[low];
+  if (target) {
+    if (room.dest.some(d => d.id === target)) return target;
+    // Also check exits for hidden rooms (e.g., typing "outside" from overview)
+    if (Object.values(room.exits).includes(target)) return target;
+  }
+  return null;
+}
+
+function processCommand(raw) {
+  const cmd = raw.toLowerCase().trim();
+  if (!cmd) return;
+
+  // Compass movement
+  const dirs = {north:'north',n:'north',south:'south',s:'south',east:'east',e:'east',west:'west',w:'west',up:'up',u:'up',down:'down',d:'down'};
+  const goMatch = cmd.match(/^go\s+(.+)$/);
+  const dirWord = goMatch ? goMatch[1].trim() : cmd;
+  if (dirs[dirWord]) {
+    const dir = dirWord.length <= 2 ? dirWord : dirWord;
+    const room = ROOMS[game.currentRoom];
+    if (room.exits[dir]) { navigateTo(room.exits[dir]); return; }
+    const short = dirs[dirWord][0];
+    if (room.exits[short]) { navigateTo(room.exits[short]); return; }
+    printDiv(); print('> ' + raw, 'prompt-echo');
+    print("You can't go that way. Type a direction or section name.", 'error');
+    return;
+  }
+
+  // Room name navigation
+  const destId = findDestByInput(cmd);
+  if (destId) { navigateTo(destId); return; }
+
+  // look
+  if (cmd === 'look' || cmd === 'l') {
+    $out.innerHTML = '';
+    displayRoom(game.currentRoom);
+    const artId = ART_BY_ROOM[game.currentRoom];
+    if (artId && game.discoveredArtifacts.has(artId)) {
+      const art = ARTIFACTS[artId];
+      print(`&#10022; ${art.name} was discovered here.`, 'artifact-quiet');
+    }
+    return;
+  }
+
+  // examine
+  const examMatch = cmd.match(/^(?:examine|x|look at|inspect|read)\s+(.+)$/);
+  if (examMatch) {
+    printDiv(); print('> ' + raw, 'prompt-echo');
+    const target = examMatch[1].trim();
+    const artId = ART_BY_ROOM[game.currentRoom];
+    if (artId && game.discoveredArtifacts.has(artId)) {
+      const art = ARTIFACTS[artId];
+      if (art.name.toLowerCase().includes(target) || target === 'artifact') {
+        print(`<b>${art.name}</b><br>${art.desc}`, 'item-desc'); return;
+      }
+    }
+    print('Everything you can see is described above. Type "look" to re-read it.', 'system');
+    return;
+  }
+
+  printDiv(); print('> ' + raw, 'prompt-echo');
+
+  // help
+  if (cmd === 'help' || cmd === '?' || cmd === 'hint' || cmd === 'hints') { printHelp(); return; }
+  // skills
+  if (cmd === 'skills' || cmd === 'resume' || cmd === 'qualifications') { printSkills(); return; }
+  // contact
+  if (cmd === 'contact' || cmd === 'email' || cmd === 'phone' || cmd === 'linkedin') { printContact(); return; }
+  // map
+  if (cmd === 'map') { printMap(); return; }
+  // score
+  if (cmd === 'score') {
+    print(`Sections explored: ${game.visitedRooms.size} / 24<br>Artifacts discovered: ${game.discoveredArtifacts.size} / 8`, 'system'); return;
+  }
+  // about
+  if (cmd === 'about' || cmd === 'info' || cmd === 'credits') {
+    print('JOHN ESCOBEDO &mdash; INTERACTIVE RESUME<br><br>An interactive exploration of 25+ years of career experience.<br>Built with JavaScript. Type directions to explore.<br><br>Type "help" for commands, "skills" for a skills summary, or "contact" for contact info.', 'system'); return;
+  }
+  // Easter eggs
+  if (cmd === 'xyzzy') { print('A hollow voice says, "That spell was deprecated in the last sprint."', 'system'); return; }
+  if (cmd === 'plugh') { print('A hollow voice says, "Please submit a feature request through the proper channels."', 'system'); return; }
+  if (cmd === 'wait' || cmd === 'z') {
+    const msgs = ['Time passes. A Slack notification pings somewhere in the distance.', 'You wait patiently. The fluorescent lights hum their eternal song.', 'Nothing happens. Somewhere, a JIRA ticket goes unassigned.', 'Time passes. You hear the distant sound of a standup meeting running long.', 'You wait. A tumbleweed of crumpled requirements documents rolls by.'];
+    print(msgs[Math.floor(Math.random() * msgs.length)], 'system'); return;
+  }
+  if (cmd === 'inventory' || cmd === 'i') {
+    if (game.discoveredArtifacts.size === 0) {
+      print('No artifacts discovered yet. They\'re hidden throughout the sections.', 'system');
+    } else {
+      let list = 'Artifacts discovered:<br>';
+      for (const artId of game.discoveredArtifacts) list += `&nbsp; &#10022; ${ARTIFACTS[artId].name}<br>`;
+      if (game.discoveredArtifacts.size < 8) list += `<br>${game.discoveredArtifacts.size}/8 found.`;
+      else list += '<br>All 8 found!';
+      print(list, 'system');
+    }
+    return;
+  }
+  if (cmd === 'quit' || cmd === 'q') { print("Thanks for visiting! (Close the browser tab to leave.)", 'system'); return; }
+
+  print('I don\'t understand that command. Type "help" for a list of commands.', 'error');
+}
+
+// ---- WIN ----
+function showWin() {
+  game.won = true;
+  print('&#10022; You found all 8 hidden artifacts! You clearly know your way around an adventure. Thanks for exploring the full career.', 'artifact-quiet');
+  updateArtifactTracker();
+}
+
+// ---- INFO COMMANDS ----
+function printHelp() {
+  print('<b>INTERACTIVE RESUME &mdash; COMMANDS</b><br><br>' +
+    'Explore by typing directions or commands.<br><br>' +
+    '<b>NAVIGATION:</b><br>' +
+    '&nbsp; Compass directions: north/south/east/west/up/down (or n/s/e/w/u/d)<br>' +
+    '&nbsp; Type a section name (e.g., "va vault", "education wing")<br><br>' +
+    '<b>COMMANDS:</b><br>' +
+    '&nbsp; look (l) &mdash; Re-read the current section<br>' +
+    '&nbsp; examine (x) &mdash; Look more closely at something<br>' +
+    '&nbsp; help &mdash; Show this help<br>' +
+    '&nbsp; map &mdash; Display the site map<br>' +
+    '&nbsp; score &mdash; Check exploration progress<br>' +
+    '&nbsp; skills / resume &mdash; View skills summary<br>' +
+    '&nbsp; contact &mdash; View contact information<br>' +
+    '&nbsp; about &mdash; Credits', 'system');
+}
+
+function printSkills() {
+  print('<b>JOHN ESCOBEDO &mdash; KEY SKILLS</b><br><br>' +
+    '<b>Business Analysis:</b> Requirements Elicitation, User Stories, Process Mapping, Gap Analysis, Stakeholder Management, Change Management<br><br>' +
+    '<b>QA Leadership:</b> Test Planning, Regression Testing, UAT, CI/CD Testing, Accessibility/508 Testing, Agile/Scrum<br><br>' +
+    '<b>Tools:</b> JIRA/Xray, TestRail, GitHub, Chrome DevTools, SQL/JQL, JavaScript/HTML/CSS, Postman<br><br>' +
+    '<b>Communication:</b> Trilingual (English, Spanish, ASL), Cross-functional Collaboration, Mentoring, Public Speaking<br><br>' +
+    '<b>Industries:</b> Healthcare, Gaming, E-Commerce, Education, Government/VA, Robotics', 'item-desc');
+}
+
+function printContact() {
+  print('<b>CONTACT JOHN ESCOBEDO</b><br><br>Email: letmeshowyou@gmail.com<br>Phone: (512) 299-3269<br>LinkedIn: linkedin.com/in/johnesco<br>Location: Manor, TX', 'system');
+}
+
+function printMap() {
+  print('<b>CAREER MAP</b><br><br>' +
+    '&nbsp; Performance Hall &larr;&mdash; Career Overview &mdash;&rarr; Education Wing<br>' +
+    '&nbsp;&nbsp;&nbsp; |-- DJ Booth&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- San Jacinto<br>' +
+    '&nbsp;&nbsp;&nbsp; |-- Karaoke Stage&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- Art Institute<br>' +
+    '&nbsp;&nbsp;&nbsp; |-- Event Space&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- Vista College<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Creative District&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|-- ASL Academy<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |-- Animation Workshop<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |-- Design Studio<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; |-- Teaching Hall<br><br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;QA Dungeon (all sections accessible from hub):<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Game Testing &bull; Virtual Worlds &bull; Battle Arena<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Healthcare &bull; E-Commerce &bull; Assessment<br>' +
+    '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; VA Vault &bull; Robotics Lab', 'system');
+}
+
+// ---- START ----
+function startGame() {
+  game.visitedRooms.add('lobby');
+  displayRoom('lobby');
+  renderNav();
+}
+
+// ---- EVENT LISTENERS ----
+$in.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const cmd = $in.value.trim();
+    if (cmd) processCommand(cmd);
+    $in.value = '';
+  }
+});
+document.addEventListener('click', function(e) { if (!e.target.classList.contains('nav-btn') && !e.target.classList.contains('header-btn')) $in.focus(); });
+
+document.getElementById('skills-btn').addEventListener('click', function() {
+  printDiv(); printSkills();
+  $out.scrollTop = $out.scrollHeight;
+});
+document.getElementById('contact-btn').addEventListener('click', function() {
+  printDiv(); printContact();
+  $out.scrollTop = $out.scrollHeight;
+});
+
+startGame();
+</script>
+</body>
+</html>

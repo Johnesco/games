@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Great Career Quest - An Interactive Resume by John Escobedo</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a2e;
+    color: #c8c8c8;
+    font-family: 'Courier New', 'Consolas', 'Monaco', monospace;
+    font-size: 16px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #header {
+    background: #0f0f23;
+    border-bottom: 2px solid #4a4a6a;
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #header h1 {
+    font-size: 18px;
+    color: #e8d44d;
+    font-weight: bold;
+  }
+  #header .status {
+    font-size: 13px;
+    color: #8888aa;
+  }
+  #output-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    scroll-behavior: smooth;
+  }
+  #output-area .room-title {
+    color: #e8d44d;
+    font-weight: bold;
+    font-size: 17px;
+  }
+  #output-area .description { color: #c8c8c8; }
+  #output-area .system { color: #6a9fb5; }
+  #output-area .error { color: #d14; }
+  #output-area .artifact-msg { color: #50fa7b; font-weight: bold; }
+  #output-area .win-msg { color: #e8d44d; font-weight: bold; }
+  #output-area .dark-msg { color: #ff5555; font-style: italic; }
+  #output-area .item-desc { color: #bd93f9; }
+  #output-area .prompt-echo { color: #8888aa; }
+  #output-area .divider { border-top: 1px solid #333355; margin: 8px 0; }
+  #input-area {
+    background: #0f0f23;
+    border-top: 2px solid #4a4a6a;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  #input-area .prompt-char {
+    color: #e8d44d;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 18px;
+  }
+  #input-area input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #f0f0f0;
+    font-family: inherit;
+    font-size: 16px;
+    outline: none;
+    caret-color: #e8d44d;
+  }
+  #input-area input::placeholder { color: #555577; }
+  .paragraph { margin-bottom: 10px; }
+  @media (max-width: 600px) {
+    body { font-size: 14px; }
+    #header h1 { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+<div id="header">
+  <h1>The Great Career Quest</h1>
+  <span class="status" id="artifact-counter">Artifacts: 0 / 8</span>
+</div>
+<div id="output-area" tabindex="-1"></div>
+<div id="input-area">
+  <span class="prompt-char">&gt;</span>
+  <input type="text" id="command-input" placeholder="Type a command..." autocomplete="off" autofocus>
+</div>
+
+<script>
+// ============================================================
+// THE GREAT CAREER QUEST - A JavaScript Text Adventure Engine
+// Based on the Inform 7 source by John Escobedo
+// ============================================================
+
+const game = {
+  currentRoom: 'entrance',
+  inventory: [],
+  trophyCaseItems: [],
+  hasLantern: false,
+  gameOver: false,
+  turnCount: 0,
+  rooms: {},
+  items: {},
+  aliases: {}
+};
+
+// ---- ROOM DEFINITIONS ----
+function defineRooms() {
+  const R = (id, props) => { game.rooms[id] = props; };
+
+  R('entrance', {
+    name: 'Career Center Entrance',
+    description: 'You are standing west of a gleaming glass building, its facade reflecting the Austin, Texas sun. A brass plaque reads "JOHN ESCOBEDO CAREER CENTER \u2014 Est. 1993." The automatic doors to the east stand open, beckoning you inside.\n\nA weathered mailbox sits by the entrance. The faint sound of keyboard clicks and coffee brewing drifts from within.',
+    exits: { east: 'lobby', e: 'lobby' },
+    scenery: {
+      'plaque': 'The plaque reads: "Quality & Business Analyst | Requirements & Process Specialist | UAT Leadership. 18+ years bridging technical teams, stakeholders, and end-users across healthcare, gaming, e-commerce, and government systems."',
+      'brass plaque': 'The plaque reads: "Quality & Business Analyst | Requirements & Process Specialist | UAT Leadership. 18+ years bridging technical teams, stakeholders, and end-users across healthcare, gaming, e-commerce, and government systems."',
+      'mailbox': 'A sturdy mailbox. Inside you find a career summary scroll. Try: examine scroll',
+      'weathered mailbox': 'A sturdy mailbox. Inside you find a career summary scroll. Try: examine scroll',
+      'scroll': 'The scroll reads: "I specialize in requirements documentation, process analysis, UAT leadership, and cross-functional collaboration. I have built QA and documentation frameworks from scratch, led Agile transitions, and served as a subject matter expert translating complex business needs into testable, actionable requirements. Trilingual communicator (English, Spanish, ASL)."\n\nOn the back: "HINT: Explore the Career Center to find 8 career artifacts. Return them all to the Trophy Case in the lobby to complete The Great Career Quest!"',
+      'career summary scroll': 'The scroll reads: "I specialize in requirements documentation, process analysis, UAT leadership, and cross-functional collaboration. I have built QA and documentation frameworks from scratch, led Agile transitions, and served as a subject matter expert translating complex business needs into testable, actionable requirements. Trilingual communicator (English, Spanish, ASL)."\n\nOn the back: "HINT: Explore the Career Center to find 8 career artifacts. Return them all to the Trophy Case in the lobby to complete The Great Career Quest!"',
+      'building': 'A gleaming glass building housing the entire Career Center. The entrance is to the east.'
+    },
+    items: []
+  });
+
+  R('lobby', {
+    name: 'Career Center Lobby',
+    description: 'You stand in the spacious lobby of the Career Center. Polished floors reflect the glow of overhead lights. Corridors branch off in every direction:\n\n  East leads to the Education Wing.\n  North leads to the Creative District.\n  Down leads to the QA Dungeon.\n  West leads to the Performance Hall.\n\nIn the center of the room, a magnificent glass trophy case awaits.',
+    exits: { west: 'entrance', w: 'entrance', east: 'education', e: 'education', north: 'creative', n: 'creative', down: 'dungeon_landing', d: 'dungeon_landing', south: 'entrance', s: 'entrance' },
+    scenery: {
+      'trophy case': null, // handled specially
+      'career trophy case': null,
+      'case': null,
+      'desk': 'A curved reception desk with a guest book. A small sign reads: "Welcome! Please explore all wings. Remember: collect all 8 artifacts and return them here to the Trophy Case."',
+      'reception desk': 'A curved reception desk with a guest book. A small sign reads: "Welcome! Please explore all wings. Remember: collect all 8 artifacts and return them here to the Trophy Case."'
+    },
+    items: ['lantern']
+  });
+
+  R('education', {
+    name: 'Education Wing',
+    description: 'You enter a bright corridor lined with diplomas, certificates, and student work. The air smells of fresh textbooks and dry-erase markers. Classrooms branch off in several directions:\n\n  North leads to the San Jacinto Classroom.\n  East leads to the Art Institute Studio.\n  South leads to the Vista College Lab.\n  Up leads to the ASL Academy.\n  West returns to the lobby.',
+    exits: { west: 'lobby', w: 'lobby', north: 'san_jacinto', n: 'san_jacinto', east: 'art_institute', e: 'art_institute', south: 'vista_college', s: 'vista_college', up: 'asl_academy', u: 'asl_academy' },
+    scenery: {
+      'diploma wall': 'The wall displays credentials from five institutions: San Jacinto College (1993-95), Art Institute of Houston (1995-96), Vista College Berkeley (2001-02), ASL School (2008-12), and Austin Community College (2015-17). An impressive commitment to lifelong learning.',
+      'wall': 'The wall displays credentials from five institutions: San Jacinto College (1993-95), Art Institute of Houston (1995-96), Vista College Berkeley (2001-02), ASL School (2008-12), and Austin Community College (2015-17). An impressive commitment to lifelong learning.',
+      'diplomas': 'The wall displays credentials from five institutions: San Jacinto College (1993-95), Art Institute of Houston (1995-96), Vista College Berkeley (2001-02), ASL School (2008-12), and Austin Community College (2015-17). An impressive commitment to lifelong learning.'
+    },
+    items: []
+  });
+
+  R('san_jacinto', {
+    name: 'San Jacinto Classroom',
+    description: 'You enter a computer lab circa 1993, complete with chunky CRT monitors and the gentle hum of cooling fans. A whiteboard displays "CS 101" and "Fine Art Fundamentals." This is San Jacinto College in Pasadena, Texas \u2014 where it all began.\n\nPosters on the wall show early programming concepts alongside figure drawing exercises. An interesting combination.',
+    exits: { south: 'education', s: 'education' },
+    scenery: {
+      'monitor': 'A thick, beige CRT monitor displaying a C++ compiler. The cursor blinks patiently. San Jacinto College, 1993-1995: Computer Science and Fine Art. The foundation of a career that would bridge the technical and the creative.',
+      'crt monitor': 'A thick, beige CRT monitor displaying a C++ compiler. The cursor blinks patiently. San Jacinto College, 1993-1995: Computer Science and Fine Art. The foundation of a career that would bridge the technical and the creative.',
+      'whiteboard': '"CS 101" and "Fine Art Fundamentals" \u2014 the two subjects that launched a career.',
+      'posters': 'Programming flowcharts next to figure drawing poses. Computer Science and Fine Art, together from the very start.'
+    },
+    items: []
+  });
+
+  R('art_institute', {
+    name: 'Art Institute Studio',
+    description: 'You step into a design studio filled with drafting tables, typography specimens, and a single SGI workstation running 3D Studio Max. This is the Art Institute of Houston, circa 1995.\n\nSamples of student work line the walls: typography layouts, figure studies, and early 3D renders that look charmingly primitive by today\'s standards.',
+    exits: { west: 'education', w: 'education' },
+    scenery: {
+      'specimen': 'A beautifully kerned specimen sheet showcasing various typefaces. Art Institute of Houston, 1995-96: Studies in Fine Art, Typography, Layout, and 3D Max. Where technical precision met artistic vision.',
+      'typography specimen': 'A beautifully kerned specimen sheet showcasing various typefaces. Art Institute of Houston, 1995-96: Studies in Fine Art, Typography, Layout, and 3D Max. Where technical precision met artistic vision.',
+      'workstation': 'An SGI workstation running 3D Studio Max. Cutting-edge in 1995.',
+      'drafting tables': 'Professional drafting tables with T-squares and triangles. The tools of pre-digital design.'
+    },
+    items: []
+  });
+
+  R('vista_college', {
+    name: 'Vista College Lab',
+    description: 'A video editing suite in Berkeley, California. Multiple monitors display timelines filled with clips. A life drawing easel stands in the corner \u2014 because creativity takes many forms.\n\nA teaching assistant\'s desk near the door is covered in student portfolios and grading rubrics.',
+    exits: { north: 'education', n: 'education' },
+    scenery: {
+      'timeline': 'A complex video editing timeline on a professional monitor. Vista College, Berkeley, 2001-02: Studies in Video Editing and Life Drawing. GPA: 3.143. Also served as a Teaching Assistant, tutoring students in Adobe Photoshop and Illustrator.',
+      'editing timeline': 'A complex video editing timeline on a professional monitor. Vista College, Berkeley, 2001-02: Studies in Video Editing and Life Drawing. GPA: 3.143. Also served as a Teaching Assistant, tutoring students in Adobe Photoshop and Illustrator.',
+      'easel': 'A life drawing easel with charcoal sticks. Creativity takes many forms.',
+      'desk': 'A teaching assistant\'s desk covered in student portfolios and grading rubrics. The first taste of mentoring others.'
+    },
+    items: []
+  });
+
+  R('asl_academy', {
+    name: 'ASL Academy',
+    description: 'You enter a quiet classroom where the walls are covered with ASL handshape charts and Deaf culture posters. Unlike other rooms, this one is intentionally silent \u2014 communication here happens with the hands, face, and body.\n\nA grade report pinned to a corkboard catches your eye. On a shelf near the door, something glimmers.',
+    exits: { down: 'education', d: 'education' },
+    scenery: {
+      'charts': 'ASL handshape charts covering the walls. Each handshape is a building block of visual language.',
+      'handshape charts': 'ASL handshape charts covering the walls. Each handshape is a building block of visual language.',
+      'grade report': 'The report shows a perfect 4.0 GPA across ASL I through IV at Austin Community College, plus Visual Gestural Communication. Years of dedication to bridging communication gaps.',
+      'corkboard': 'A corkboard with a grade report showing a perfect 4.0 GPA. Try: examine grade report',
+      'posters': 'Posters about Deaf culture, history, and community. Understanding the culture is as important as learning the language.'
+    },
+    items: ['trilingual_amulet']
+  });
+
+  R('creative', {
+    name: 'Creative District',
+    description: 'You emerge into a colorful open space that feels part art gallery, part co-working space. Paint-splattered easels share floor space with Wacom tablets and light tables. The creative energy is palpable.\n\n  North leads to the Animation Workshop.\n  East leads to the Design Studio.\n  West leads to the Teaching Hall.\n  South returns to the lobby.',
+    exits: { south: 'lobby', s: 'lobby', north: 'animation', n: 'animation', east: 'design_studio', e: 'design_studio', west: 'teaching_hall', w: 'teaching_hall' },
+    scenery: {
+      'easels': 'Paint-splattered easels in various states of creative abandon.',
+      'tablets': 'Wacom drawing tablets \u2014 the bridge between traditional art and digital creation.'
+    },
+    items: []
+  });
+
+  R('animation', {
+    name: 'Animation Workshop',
+    description: 'You enter a professional animation studio. Light tables line the walls, and a Cintiq display shows a half-finished character animation. Cels hang from a drying line overhead.\n\nA sign on the wall reads "Wild Brain Animation / Diva Productions." The smell of ink and creativity fills the air.',
+    exits: { south: 'creative', s: 'creative' },
+    scenery: {
+      'light table': 'A professional animation light table, still warm to the touch. The tools of traditional animation \u2014 a skill that bridges the gap between art and technology.',
+      'sign': '"Wild Brain Animation / Diva Productions" \u2014 two studios where animation came to life.',
+      'cintiq': 'A Cintiq display showing a half-finished character animation. Frame by frame, the magic happens.',
+      'cels': 'Animation cels hanging from a drying line. Each one a single frame in the story of creativity.'
+    },
+    items: ['enchanted_animation_cel']
+  });
+
+  R('design_studio', {
+    name: 'Design Studio',
+    description: 'A multi-era design studio that seems to span the late \'90s through early 2000s. On one desk, QuarkXPress layouts for a Spanish-language newspaper. On another, early web graphics for an eLearning platform. A Rich Media research station occupies the far wall.\n\nThe room tells the story of design\'s evolution from print to digital.',
+    exits: { west: 'creative', w: 'creative' },
+    scenery: {
+      'layout': 'A QuarkXPress layout for El Dia Daily Newspaper (Houston, 2004) \u2014 a Spanish-language daily where all work and communication happened in Spanish. Also visible are projects from Mediaplex (San Francisco, 1999-2000, Rich Media research), DigitalThink (2000, eLearning graphics), and Computer Discovery Center (Houston, 2002-04, digital art and photo editing). A diverse portfolio spanning print, web, and multimedia.',
+      'newspaper layout': 'A QuarkXPress layout for El Dia Daily Newspaper (Houston, 2004) \u2014 a Spanish-language daily where all work and communication happened in Spanish. Also visible are projects from Mediaplex (San Francisco, 1999-2000, Rich Media research), DigitalThink (2000, eLearning graphics), and Computer Discovery Center (Houston, 2002-04, digital art and photo editing). A diverse portfolio spanning print, web, and multimedia.',
+      'research station': 'A Rich Media research station from Mediaplex (San Francisco, 1999-2000). Researching emerging technologies and translating technical specifications into actionable insights for product teams.',
+      'desk': 'Multiple desks spanning multiple eras of design. QuarkXPress, Adobe InDesign, Photoshop, Illustrator \u2014 the tools evolved, but the eye for design remained constant.'
+    },
+    items: []
+  });
+
+  R('teaching_hall', {
+    name: 'Teaching Hall',
+    description: 'You enter a warm, well-lit classroom with rows of computers and a large projection screen. Student work is displayed proudly on every wall. This room has seen thousands of students pass through, each one leaving a little more skilled than when they arrived.\n\nA course catalog on the podium lists an impressive range of subjects.',
+    exits: { east: 'creative', e: 'creative' },
+    scenery: {
+      'catalog': 'The catalog lists teaching positions spanning Houston to the Bay Area:\n\nHOUSTON MULTIMEDIA CENTER (1997-98) \u2014 Curriculum development and instruction in Adobe PageMill, HTML, Photoshop, and After Effects.\n\nBAY AREA VIDEO COALITION (1999-2000) \u2014 Expert-level instruction in After Effects and Dreamweaver. Multi-session workshops combining lecture, demo, and hands-on practice.\n\nMEDIA ALLIANCE (San Francisco, 2001-02) \u2014 Workshops on Microsoft Office, Photoshop, and web fundamentals. Managed the computer lab facility.\n\nTELE ATLAS (Menlo Park, 2000-01) \u2014 Developed training programs on data collection methodologies and evaluated trainee performance.\n\nA career of empowering others through knowledge transfer \u2014 a skill that would prove essential in QA leadership.',
+      'course catalog': 'The catalog lists teaching positions spanning Houston to the Bay Area:\n\nHOUSTON MULTIMEDIA CENTER (1997-98) \u2014 Curriculum development and instruction in Adobe PageMill, HTML, Photoshop, and After Effects.\n\nBAY AREA VIDEO COALITION (1999-2000) \u2014 Expert-level instruction in After Effects and Dreamweaver. Multi-session workshops combining lecture, demo, and hands-on practice.\n\nMEDIA ALLIANCE (San Francisco, 2001-02) \u2014 Workshops on Microsoft Office, Photoshop, and web fundamentals. Managed the computer lab facility.\n\nTELE ATLAS (Menlo Park, 2000-01) \u2014 Developed training programs on data collection methodologies and evaluated trainee performance.\n\nA career of empowering others through knowledge transfer \u2014 a skill that would prove essential in QA leadership.',
+      'screen': 'A large projection screen showing a lesson on Adobe After Effects. The cursor moves with practiced confidence.',
+      'student work': 'Student projects from various classes \u2014 web pages, photo edits, motion graphics. Every piece represents someone who learned something new.'
+    },
+    items: []
+  });
+
+  R('dungeon_landing', {
+    name: 'QA Dungeon Landing',
+    description: 'You descend a spiral staircase into the depths below the Career Center. The fluorescent lights flicker ominously. A sign reads "THE QA DUNGEON \u2014 The Great Underground Empire of Quality Assurance."\n\nThe air is thick with the tension of unreproduced bugs and ambiguous requirements. Passages lead in several directions:\n\n  North leads to the Game Testing Cavern.\n  East leads to the Virtual Worlds Chamber.\n  South leads to the Battle Arena.\n  West leads to the Healthcare Corridor.\n  Up returns to the lobby.\n\nSome passages ahead look dark. You might need a light source.',
+    exits: { up: 'lobby', u: 'lobby', north: 'game_testing', n: 'game_testing', east: 'virtual_worlds', e: 'virtual_worlds', south: 'battle_arena', s: 'battle_arena', west: 'healthcare', w: 'healthcare' },
+    scenery: {
+      'sign': '"THE QA DUNGEON \u2014 The Great Underground Empire of Quality Assurance." Below in smaller text: "Abandon all bugs, ye who enter here."',
+      'staircase': 'A spiral staircase leading back up to the lobby. The fluorescent lights flicker as you look up.',
+      'lights': 'The fluorescent lights flicker ominously. A meeting invite is probably about to appear.'
+    },
+    items: []
+  });
+
+  R('game_testing', {
+    name: 'Game Testing Cavern',
+    description: 'You enter a cavern filled with gaming hardware from every era. Stacks of game discs tower precariously. Test matrices cover the walls, annotated in red ink. A desk overflows with 100+ mobile devices of every make and model.\n\nTwo company banners hang from the ceiling: "Super Happy Fun Fun" and "Aspyr Media."',
+    exits: { south: 'dungeon_landing', s: 'dungeon_landing', east: 'robotics_lab', e: 'robotics_lab' },
+    scenery: {
+      'banners': '"Super Happy Fun Fun" and "Aspyr Media" \u2014 two companies where the love of gaming met the discipline of quality assurance.',
+      'devices': 'Over one hundred mobile devices of various makes and models, each tagged with test results. The sheer variety is staggering \u2014 a testament to the thoroughness required in cross-platform QA.',
+      'device stack': 'Over one hundred mobile devices of various makes and models, each tagged with test results. The sheer variety is staggering \u2014 a testament to the thoroughness required in cross-platform QA.',
+      'matrices': 'Test matrices annotated in red ink, covering every combination of platform, browser, and device. Thoroughness incarnate.',
+      'test matrices': 'Test matrices annotated in red ink, covering every combination of platform, browser, and device. Thoroughness incarnate.'
+    },
+    items: ['golden_bug_report']
+  });
+
+  R('virtual_worlds', {
+    name: 'Virtual Worlds Chamber',
+    dark: true,
+    description: 'A vast digital landscape stretches before you \u2014 or rather, a room designed to simulate one. Holographic displays show the virtual world of Second Life: avatars flying, building, and socializing across an infinite digital frontier.\n\nThree promotion certificates are framed on the wall, each one a step up.',
+    exits: { west: 'dungeon_landing', w: 'dungeon_landing' },
+    scenery: {
+      'certificates': 'LINDEN LAB / SECOND LIFE (San Francisco Remote, 2007-2010):\n\nThree promotions in three years \u2014 from frontline First Responder to Community Operations to QA Analyst. Started by managing in-world emergencies and enforcing Terms of Service. Identified operational inefficiencies and built custom diagnostic tools. Played a key role in establishing customer support processes. Promoted to QA Analyst after demonstrating exceptional analytical and diagnostic skills.\n\nA journey from support to QA that proved the value of understanding systems from the user\'s perspective.',
+      'promotion certificates': 'LINDEN LAB / SECOND LIFE (San Francisco Remote, 2007-2010):\n\nThree promotions in three years \u2014 from frontline First Responder to Community Operations to QA Analyst. Started by managing in-world emergencies and enforcing Terms of Service. Identified operational inefficiencies and built custom diagnostic tools. Played a key role in establishing customer support processes. Promoted to QA Analyst after demonstrating exceptional analytical and diagnostic skills.\n\nA journey from support to QA that proved the value of understanding systems from the user\'s perspective.',
+      'displays': 'Holographic displays showing the virtual world of Second Life in all its user-generated glory. Avatars fly, build, and socialize.',
+      'holographic displays': 'Holographic displays showing the virtual world of Second Life in all its user-generated glory. Avatars fly, build, and socialize.'
+    },
+    items: []
+  });
+
+  R('battle_arena', {
+    name: 'Battle Arena',
+    dark: true,
+    description: 'You step into an epic arena that could only be one place: the World of Warcraft support center at Blizzard Entertainment. Holographic displays show Azeroth in all its glory. A Game Master\'s console glows in the center of the room, ready to resolve the next crisis.\n\nSomething glints near the console.',
+    exits: { north: 'dungeon_landing', n: 'dungeon_landing' },
+    scenery: {
+      'console': 'A Game Master\'s console for World of Warcraft. The screen shows a queue of support tickets, each representing a player in need. The tools of empathetic, high-touch customer experience support.',
+      'gm console': 'A Game Master\'s console for World of Warcraft. The screen shows a queue of support tickets, each representing a player in need. The tools of empathetic, high-touch customer experience support.',
+      'displays': 'Holographic displays showing Azeroth \u2014 Stormwind, Orgrimmar, the Barrens. Every zone a potential support ticket.'
+    },
+    items: ['game_masters_badge']
+  });
+
+  R('healthcare', {
+    name: 'Healthcare Corridor',
+    dark: true,
+    description: 'A long, sterile corridor with the unmistakable feel of healthcare technology. HIPAA compliance notices line the walls. Three doors are labeled with company names: DocbookMD, Communication Services for the Deaf, and EverlyWell.\n\nAn accessibility testing station occupies one alcove, equipped with screen readers and assistive devices. Something important rests on the testing station.',
+    exits: { east: 'dungeon_landing', e: 'dungeon_landing', south: 'ecommerce', s: 'ecommerce' },
+    scenery: {
+      'station': 'A testing station equipped with JAWS screen reader, VoiceOver, a refreshable Braille display, and various assistive technologies. Tools for ensuring digital products work for everyone.',
+      'accessibility station': 'A testing station equipped with JAWS screen reader, VoiceOver, a refreshable Braille display, and various assistive technologies. Tools for ensuring digital products work for everyone.',
+      'testing station': 'A testing station equipped with JAWS screen reader, VoiceOver, a refreshable Braille display, and various assistive technologies. Tools for ensuring digital products work for everyone.',
+      'notices': 'HIPAA compliance notices covering every wall. "Protected Health Information \u2014 Handle With Care." Healthcare QA means lives are on the line.',
+      'doors': 'Three doors labeled: DocbookMD (HIPAA messaging, 2012-13), Communication Services for the Deaf (video interpreting, 2013-15), and EverlyWell (health tech, 2018).'
+    },
+    items: ['accessibility_scroll']
+  });
+
+  R('ecommerce', {
+    name: 'E-Commerce Lab',
+    dark: true,
+    description: 'A bustling lab filled with monitors displaying e-commerce dashboards, coupon codes, and analytics graphs. Everything here is about conversion rates and data integrity. The energy of retail meets the precision of quality assurance.\n\nCompany logos for Luna Data Solutions and RetailMeNot adorn the walls.',
+    exits: { north: 'healthcare', n: 'healthcare', east: 'assessment', e: 'assessment' },
+    scenery: {
+      'dashboard': 'LUNA DATA SOLUTIONS / RETAILMENOT (Austin, 2015-17) \u2014 Coordinated QA efforts across multiple teams for the high-visibility gift card feature launch. Engineered custom JavaScript tools to validate site-wide analytics and data integrity. Responded to live production issues under pressure, triaging and communicating during critical outages.\n\nAlso contracted through Luna Data for HEATWAVE INTERACTIVE (2011-12), where promotion to Test Lead came from documentation quality and team leadership skills.',
+      'analytics dashboard': 'LUNA DATA SOLUTIONS / RETAILMENOT (Austin, 2015-17) \u2014 Coordinated QA efforts across multiple teams for the high-visibility gift card feature launch. Engineered custom JavaScript tools to validate site-wide analytics and data integrity. Responded to live production issues under pressure, triaging and communicating during critical outages.\n\nAlso contracted through Luna Data for HEATWAVE INTERACTIVE (2011-12), where promotion to Test Lead came from documentation quality and team leadership skills.',
+      'monitors': 'Monitors displaying e-commerce dashboards, analytics graphs, and coupon code validation results.',
+      'logos': 'Luna Data Solutions and RetailMeNot logos side by side. The contractor-client relationship that powered years of e-commerce QA.'
+    },
+    items: []
+  });
+
+  R('assessment', {
+    name: 'Assessment Chamber',
+    dark: true,
+    description: 'A clean, modern room with assessment terminals lining the walls. Each screen displays aptitude tests and career matching algorithms. This is where YouScience helped students discover their potential.\n\nA stone tablet leans against one of the terminals, inscribed with methodology.',
+    exits: { west: 'ecommerce', w: 'ecommerce', north: 'va_vault', n: 'va_vault' },
+    scenery: {
+      'terminals': 'Assessment terminals displaying aptitude tests and career matching algorithms. YouScience\'s platform helped students discover their strengths.',
+      'screens': 'Each screen shows a different aptitude assessment. The data-driven approach to career discovery.'
+    },
+    items: ['agile_manifesto_tablet']
+  });
+
+  R('va_vault', {
+    name: 'The VA Vault',
+    dark: true,
+    description: 'You enter a massive, secure vault lined with government documentation. Filing cabinets stretch floor to ceiling, each labeled with VA project codes. A requirements traceability matrix covers an entire wall, mapping every business need to its test coverage.\n\nSix years of meticulous work fill this room. A crystal document gleams on a reading stand.',
+    exits: { south: 'assessment', s: 'assessment' },
+    scenery: {
+      'cabinets': 'Filing cabinets labeled with VA project codes. Each drawer contains years of testing documentation, requirements, and traceability matrices.',
+      'filing cabinets': 'Filing cabinets labeled with VA project codes. Each drawer contains years of testing documentation, requirements, and traceability matrices.',
+      'matrix': 'A requirements traceability matrix covering an entire wall. Every business need mapped to its test coverage across web, mainframe, and mobile platforms. The work of years, visible at a glance.',
+      'traceability matrix': 'A requirements traceability matrix covering an entire wall. Every business need mapped to its test coverage across web, mainframe, and mobile platforms. The work of years, visible at a glance.'
+    },
+    items: ['crystal_requirements_document']
+  });
+
+  R('robotics_lab', {
+    name: 'Robotics Lab',
+    dark: true,
+    description: 'You step into a cutting-edge robotics laboratory. A humanoid robot stands in a testing area, its joints articulated with eerie precision. Monitors display telemetry data, behavior logs, and troubleshooting protocols.\n\nThis is the frontier \u2014 where QA meets the physical world.',
+    exits: { west: 'game_testing', w: 'game_testing' },
+    scenery: {
+      'robot': 'INSIGHT GLOBAL / APPTRONIK (Austin, 2025) \u2014 Robot Tele-Operator for humanoid robot development. Translated observed robot behaviors into clear, actionable bug reports. Proactively authored troubleshooting protocols and SOPs where none existed. Bridged operations and engineering communication. Reduced physical testing environment setup time by 75% through standardized preparation patterns.\n\nReached full productivity in a novel role with minimal onboarding \u2014 because 18+ years of QA teaches you how to learn fast.',
+      'humanoid robot': 'INSIGHT GLOBAL / APPTRONIK (Austin, 2025) \u2014 Robot Tele-Operator for humanoid robot development. Translated observed robot behaviors into clear, actionable bug reports. Proactively authored troubleshooting protocols and SOPs where none existed. Bridged operations and engineering communication. Reduced physical testing environment setup time by 75% through standardized preparation patterns.\n\nReached full productivity in a novel role with minimal onboarding \u2014 because 18+ years of QA teaches you how to learn fast.',
+      'telemetry': 'Telemetry data streaming in real-time from the humanoid robot. Behavior logs, sensor readings, and performance metrics.',
+      'monitors': 'Monitors displaying robot telemetry data, behavior logs, and the troubleshooting protocols that were authored from scratch.'
+    },
+    items: []
+  });
+
+  R('performance', {
+    name: 'Performance Hall',
+    description: 'You step into a vibrant entertainment venue. Stage lights cast colorful patterns across the floor. The sound system hums with potential. Three stages are visible from here, each representing a different facet of performance and event coordination.\n\n  North leads to the DJ Booth.\n  South leads to the Karaoke Stage.\n  West leads to the Event Space.\n  East returns to the lobby.',
+    exits: { east: 'lobby', e: 'lobby', north: 'dj_booth', n: 'dj_booth', south: 'karaoke', s: 'karaoke', west: 'event_space', w: 'event_space' },
+    scenery: {
+      'lights': 'Stage lights casting colorful patterns \u2014 reds, blues, greens sweeping across the floor.',
+      'sound system': 'A professional sound system humming with potential. Ready for anything from DJ sets to karaoke nights.'
+    },
+    items: []
+  });
+
+  R('dj_booth', {
+    name: 'DJ Booth',
+    description: 'A professional DJ setup dominates this room: turntables, CDJs, a mixer, and speakers that could shake the building. Setlists for Danceversity, Dance International, and Synergy Dance Studio are pinned to a corkboard. The energy of a hundred dance nights lingers in the air.\n\nA magnificent turntable sits on a golden stand.',
+    exits: { south: 'performance', s: 'performance' },
+    scenery: {
+      'corkboard': 'Setlists pinned to a corkboard: Danceversity, Dance International, and Synergy Dance Studio. Each one a different vibe, a different crowd, a different challenge.',
+      'setlists': 'Setlists for Danceversity, Dance International, and Synergy Dance Studio. Salsa, swing, blues \u2014 each event required a different musical vocabulary.',
+      'mixer': 'A professional DJ mixer. The heart of any DJ setup \u2014 where tracks are blended and the energy is controlled.',
+      'speakers': 'Speakers that could shake the building. With great power comes great responsibility (and noise complaints).'
+    },
+    items: ['turntable_of_coordination']
+  });
+
+  R('karaoke', {
+    name: 'Karaoke Stage',
+    description: 'A spotlight illuminates a karaoke stage, complete with a massive song catalog, professional monitors, and a mic that is still warm. The audience area is set up for maximum participation \u2014 because karaoke is about bringing everyone into the experience.\n\nThis stage is still active. The setlist for tonight is being prepared.',
+    exits: { north: 'performance', n: 'performance' },
+    scenery: {
+      'mic': 'KARAOKE HOST (Austin, 2025-Present) \u2014 The current gig. Coordinating event flow and timing while adapting to audience needs in real-time. Managing technical setup including sound systems, software, and troubleshooting. Creating an inclusive, welcoming atmosphere that encourages participation from everyone.\n\nIt\'s not so different from facilitating a sprint review, when you think about it.',
+      'microphone': 'KARAOKE HOST (Austin, 2025-Present) \u2014 The current gig. Coordinating event flow and timing while adapting to audience needs in real-time. Managing technical setup including sound systems, software, and troubleshooting. Creating an inclusive, welcoming atmosphere that encourages participation from everyone.\n\nIt\'s not so different from facilitating a sprint review, when you think about it.',
+      'karaoke mic': 'KARAOKE HOST (Austin, 2025-Present) \u2014 The current gig. Coordinating event flow and timing while adapting to audience needs in real-time. Managing technical setup including sound systems, software, and troubleshooting. Creating an inclusive, welcoming atmosphere that encourages participation from everyone.\n\nIt\'s not so different from facilitating a sprint review, when you think about it.',
+      'catalog': 'A massive song catalog spanning every genre. From classic rock to K-pop, from country to show tunes. Something for everyone.',
+      'spotlight': 'A single spotlight illuminating center stage. The moment of truth for every performer.'
+    },
+    items: []
+  });
+
+  R('event_space', {
+    name: 'Event Space',
+    description: 'A multi-purpose event venue that once hosted weekly dance events. The layout is optimized for flow: a stage area, a dance floor, and a social zone. Photos on the wall show packed houses and happy dancers.\n\nThe Kick Butt Coffee logo is prominently displayed.',
+    exits: { east: 'performance', e: 'performance' },
+    scenery: {
+      'photos': 'KICK BUTT COFFEE (Austin, 2011-12) \u2014 Event Coordinator and Host. Organized and ran weekly events, coordinating DJs, venue logistics, and audience engagement. Set up technical infrastructure for seamless integration with house audio systems. Managed event promotion and community communication through social media.\n\nEvent coordination is project management in party form: stakeholders, timelines, logistics, and the ever-present risk of things going sideways.',
+      'event photos': 'KICK BUTT COFFEE (Austin, 2011-12) \u2014 Event Coordinator and Host. Organized and ran weekly events, coordinating DJs, venue logistics, and audience engagement. Set up technical infrastructure for seamless integration with house audio systems. Managed event promotion and community communication through social media.\n\nEvent coordination is project management in party form: stakeholders, timelines, logistics, and the ever-present risk of things going sideways.',
+      'logo': 'The Kick Butt Coffee logo \u2014 an Austin institution for live music, events, and caffeine-fueled creativity.',
+      'dance floor': 'A well-worn dance floor. If these boards could talk, they\'d tell stories of a hundred dance nights.'
+    },
+    items: []
+  });
+}
+
+// ---- ITEM DEFINITIONS ----
+function defineItems() {
+  const I = (id, props) => { game.items[id] = props; };
+
+  I('lantern', {
+    name: 'Lantern of Experience',
+    keywords: ['lantern', 'lantern of experience', 'brass lantern', 'lamp'],
+    roomDesc: 'A brass lantern sits on the reception desk, glowing with a warm, steady light.',
+    description: 'An old brass lantern that burns with the steady flame of accumulated professional experience. It reads "Powered by 25+ years of learning on the job." This should illuminate even the darkest corners of the QA Dungeon.',
+    artifact: false
+  });
+
+  I('trilingual_amulet', {
+    name: 'Trilingual Amulet',
+    keywords: ['amulet', 'trilingual amulet', 'trilingual'],
+    roomDesc: 'A shimmering amulet rests on a display shelf, pulsing with three distinct colors.',
+    description: 'The Trilingual Amulet glows with three intertwined lights \u2014 one for each language John speaks: English (native), Spanish (conversational), and American Sign Language (conversational). Earned through years of study at ASL School (2008-12) and Austin Community College (2015-17), where he achieved a perfect 4.0 GPA.\n\nLearning ASL was not just academic \u2014 at Communication Services for the Deaf, he immersed himself in Deaf culture to better understand the users he was testing for.',
+    artifact: true
+  });
+
+  I('enchanted_animation_cel', {
+    name: 'Enchanted Animation Cel',
+    keywords: ['cel', 'animation cel', 'enchanted animation cel', 'enchanted cel'],
+    roomDesc: 'A single animation cel glows with an otherworldly shimmer on the light table.',
+    description: 'The Enchanted Animation Cel shows a perfectly drawn frame of animation, shimmering with creative energy. It represents work at two studios:\n\nWILD BRAIN (San Francisco, 2002) \u2014 Interned at this professional animation studio, gaining hands-on experience with digital coloring workflows and traditional animation using professional equipment.\n\nDIVA PRODUCTIONS (Austin, 2004-05) \u2014 Owned the full animation production pipeline for educational children\'s content: writing scripts, creating storyboards, building animatics, and delivering final animations.',
+    artifact: true
+  });
+
+  I('golden_bug_report', {
+    name: 'Golden Bug Report',
+    keywords: ['bug report', 'golden bug report', 'report', 'golden report', 'bug'],
+    roomDesc: 'A golden document glows atop a stack of game cases.',
+    description: 'The Golden Bug Report shimmers with the weight of thousands of meticulously documented defects. It represents the foundation of a QA career:\n\nSUPER HAPPY FUN FUN (Austin, 2006-07) \u2014 Cross-platform compatibility testing across 100+ unique mobile device models. Documented platform-specific bugs in Mantis. Maintained quality oversight across the full product lifecycle.\n\nASPYR MEDIA (Austin, 2006) \u2014 QA for high-profile Mac game ports including Call of Duty 2 and Civilization IV. Authored detailed test plans, collaborated with dev to isolate Mac-specific issues, and caught localization errors through exhaustive proofreading.\n\nThe inscription reads: "Every bug found in testing is a bug the user never sees."',
+    artifact: true
+  });
+
+  I('game_masters_badge', {
+    name: "Game Master's Badge",
+    keywords: ['badge', "game master's badge", 'game masters badge', "master's badge", 'masters badge', "gm badge"],
+    roomDesc: "A gleaming badge rests beside the Game Master's console.",
+    description: 'The Game Master\'s Badge bears the Blizzard Entertainment crest and the title "Game Master \u2014 World of Warcraft" (Austin, 2010-2011).\n\nAnalyzed and documented cases of fraud and exploitation, providing detailed reports with root cause analysis. Provided compassionate support during emotionally charged escalations \u2014 restoring lost items and accounts while maintaining user trust. De-escalated frustrated users through patient listening. Delivered high-volume support via live chat and ticket systems.\n\nThe badge inscription reads: "For the Horde! (And also the Alliance. We do not discriminate in customer service.)"',
+    artifact: true
+  });
+
+  I('accessibility_scroll', {
+    name: 'Accessibility Scroll',
+    keywords: ['scroll', 'accessibility scroll', 'accessibility'],
+    roomDesc: 'An ornate scroll rests on the accessibility testing station, radiating an inclusive aura.',
+    description: 'The Accessibility Scroll is inscribed with the principles of inclusive design and 508 compliance. It represents expertise earned across three healthcare organizations:\n\nDOCBOOKMD (Austin, 2012-13) \u2014 Founded the QA function for a HIPAA-compliant healthcare messaging app. Analyzed compliance requirements for secure patient health information. Grew the QA department from solo operation to a full team.\n\nCOMMUNICATION SERVICES FOR THE DEAF (Austin, 2013-15) \u2014 Developed inaugural QA process for an accessibility-focused video interpreting platform. Invested in learning ASL and Deaf cultural norms to truly understand user needs. Established the company\'s first quality assurance function.\n\nEVERLYWELL (Austin, 2018) \u2014 Established quality processes for a health tech startup\'s secure patient portal. Designed unified JIRA workflows and defined initial QA validation criteria.\n\nThe scroll whispers: "508 compliance is not a checkbox \u2014 it is a commitment to ensuring everyone can participate."',
+    artifact: true
+  });
+
+  I('agile_manifesto_tablet', {
+    name: 'Agile Manifesto Tablet',
+    keywords: ['tablet', 'agile manifesto tablet', 'agile tablet', 'manifesto', 'agile manifesto', 'stone tablet'],
+    roomDesc: 'A heavy stone tablet leans against a terminal, etched with glowing text.',
+    description: 'The Agile Manifesto Tablet is carved from obsidian and etched with the principles of Agile methodology \u2014 but this is not just theory. It represents hands-on Agile leadership:\n\nYOUSCIENCE (Austin, 2017-18) \u2014 As the sole QA resource, built comprehensive quality processes and test infrastructure for the education assessment platform. Created end-to-end test documentation. Introduced standardized user story and acceptance criteria templates that reduced ambiguity.\n\nThe tablet\'s Agile journey continued at GeekSI, where John championed the transition from Waterfall to Agile, coaching distributed teams and gaining leadership buy-in.\n\nInscribed on the back: "Individuals and interactions over processes and tools \u2014 but good processes help individuals interact better."',
+    artifact: true
+  });
+
+  I('crystal_requirements_document', {
+    name: 'Crystal Requirements Document',
+    keywords: ['document', 'crystal requirements document', 'crystal document', 'requirements document', 'crystal', 'requirements'],
+    roomDesc: 'A crystalline document floats above a reading stand, refracting light into rainbow patterns.',
+    description: 'The Crystal Requirements Document is a masterwork of business analysis, perfectly transparent and multifaceted \u2014 just like good requirements should be.\n\nGEEKSI / VA PROJECTS (Tallahassee FL Remote, 2019-2025) \u2014 6+ years as Senior QA Test Lead, QA Analyst, and Scrum Master across multiple mission-critical VA healthcare projects.\n\nBecame the go-to SME for the Traumatic Brain Injury module. Championed Waterfall-to-Agile transition. Drove standardization of testing practices across distributed teams. Advocated for accessibility as a core quality metric, leading 508 compliance initiatives. Collaborated with automation engineers to validate Cucumber/Selenium scripts. Built requirements traceability documentation mapping every business need to test coverage across web, mainframe, and mobile.\n\nThe inscription reads: "Requirements are the foundation. Everything else is commentary."',
+    artifact: true
+  });
+
+  I('turntable_of_coordination', {
+    name: 'Turntable of Coordination',
+    keywords: ['turntable', 'turntable of coordination', 'record player'],
+    roomDesc: 'A legendary turntable sits on a golden stand, softly spinning.',
+    description: 'The Turntable of Coordination spins with perfect rhythm, representing the art of reading a room and adapting in real-time.\n\nFREELANCE DJ (Austin, 2011-12) \u2014 Created DJ setlists for Danceversity, Dance International, and Synergy Dance Studio. Adapted to various in-house sound systems and venue constraints. Coordinated with event organizers to align music selection with event tone and timing.\n\nThe skills of a DJ \u2014 reading the room, adapting on the fly, managing technical complexity while keeping the audience engaged \u2014 are the same skills that make a great QA lead.\n\nThe plaque reads: "Every great event is a live test of coordination, timing, and user experience."',
+    artifact: true
+  });
+}
+
+// ---- OUTPUT HELPERS ----
+const output = document.getElementById('output-area');
+const input = document.getElementById('command-input');
+const counter = document.getElementById('artifact-counter');
+
+function print(text, className) {
+  const div = document.createElement('div');
+  div.className = 'paragraph ' + (className || 'description');
+  div.innerHTML = text.replace(/\n/g, '<br>');
+  output.appendChild(div);
+  output.scrollTop = output.scrollHeight;
+}
+
+function printDivider() {
+  const div = document.createElement('div');
+  div.className = 'divider';
+  output.appendChild(div);
+}
+
+function updateCounter() {
+  const carried = game.inventory.filter(id => game.items[id].artifact).length;
+  const cased = game.trophyCaseItems.length;
+  counter.textContent = `Artifacts: ${carried + cased} / 8`;
+}
+
+// ---- ROOM DISPLAY ----
+function canSeeInRoom(roomId) {
+  const room = game.rooms[roomId];
+  if (!room.dark) return true;
+  return game.hasLantern;
+}
+
+function displayRoom(roomId) {
+  const room = game.rooms[roomId];
+  if (!canSeeInRoom(roomId)) {
+    print(room.name, 'room-title');
+    print('It is pitch black. You are likely to be consumed by imposter syndrome. If only you had some source of light...', 'dark-msg');
+    return;
+  }
+  print(room.name, 'room-title');
+  print(room.description);
+  // Show items in room
+  for (const itemId of room.items) {
+    if (!game.inventory.includes(itemId) && !game.trophyCaseItems.includes(itemId)) {
+      print(game.items[itemId].roomDesc, 'item-desc');
+    }
+  }
+}
+
+// ---- FIND ITEM BY KEYWORD ----
+function findItem(keyword) {
+  keyword = keyword.toLowerCase().trim();
+  // Check inventory first
+  for (const id of game.inventory) {
+    if (game.items[id].keywords.some(k => k === keyword)) return { id, location: 'inventory' };
+  }
+  // Check current room
+  const room = game.rooms[game.currentRoom];
+  for (const id of room.items) {
+    if (!game.inventory.includes(id) && !game.trophyCaseItems.includes(id)) {
+      if (game.items[id].keywords.some(k => k === keyword)) return { id, location: 'room' };
+    }
+  }
+  // Check trophy case
+  for (const id of game.trophyCaseItems) {
+    if (game.items[id].keywords.some(k => k === keyword)) return { id, location: 'case' };
+  }
+  return null;
+}
+
+// ---- COMMAND PROCESSING ----
+function processCommand(raw) {
+  if (game.gameOver) {
+    print('The game is over. Refresh the page to play again.', 'system');
+    return;
+  }
+  game.turnCount++;
+  const cmd = raw.toLowerCase().trim();
+  if (!cmd) return;
+
+  // Movement
+  const moveAliases = {
+    'north': 'north', 'n': 'n', 'south': 'south', 's': 's',
+    'east': 'east', 'e': 'e', 'west': 'west', 'w': 'w',
+    'up': 'up', 'u': 'u', 'down': 'down', 'd': 'd',
+    'go north': 'north', 'go south': 'south', 'go east': 'east',
+    'go west': 'west', 'go up': 'up', 'go down': 'down',
+    'go n': 'n', 'go s': 's', 'go e': 'e', 'go w': 'w',
+    'go u': 'u', 'go d': 'd'
+  };
+
+  if (moveAliases[cmd]) {
+    const dir = moveAliases[cmd];
+    const room = game.rooms[game.currentRoom];
+    if (room.exits[dir]) {
+      game.currentRoom = room.exits[dir];
+      game.hasLantern = game.inventory.includes('lantern');
+      displayRoom(game.currentRoom);
+    } else {
+      print("You can't go that way.", 'error');
+    }
+    return;
+  }
+
+  // Look
+  if (cmd === 'look' || cmd === 'l') {
+    displayRoom(game.currentRoom);
+    return;
+  }
+
+  // Inventory
+  if (cmd === 'inventory' || cmd === 'i') {
+    if (game.inventory.length === 0) {
+      print('You are empty-handed.', 'system');
+    } else {
+      print('You are carrying:', 'system');
+      for (const id of game.inventory) {
+        const item = game.items[id];
+        print('  ' + item.name + (item.artifact ? ' [artifact]' : ''), 'system');
+      }
+    }
+    return;
+  }
+
+  // Examine / look at
+  const examMatch = cmd.match(/^(?:examine|x|look at|inspect|read)\s+(.+)$/);
+  if (examMatch) {
+    const target = examMatch[1].trim();
+
+    // Trophy case special
+    if (target === 'trophy case' || target === 'career trophy case' || target === 'case') {
+      if (game.currentRoom !== 'lobby') {
+        print("You don't see a trophy case here.", 'error');
+        return;
+      }
+      const n = game.trophyCaseItems.length;
+      if (n === 0) {
+        print('A magnificent glass trophy case, about four feet tall, sitting on a marble pedestal. It is completely empty, its shelves waiting to display the artifacts of a distinguished career.', 'item-desc');
+      } else if (n === 8) {
+        print('A magnificent glass trophy case gleaming with all eight career artifacts!', 'item-desc');
+      } else {
+        print(`A magnificent glass trophy case on a marble pedestal. It contains ${n} of 8 artifacts so far:`, 'item-desc');
+        for (const id of game.trophyCaseItems) {
+          print('  ' + game.items[id].name, 'item-desc');
+        }
+      }
+      return;
+    }
+
+    // Check items
+    const found = findItem(target);
+    if (found) {
+      if (!canSeeInRoom(game.currentRoom) && found.location === 'room') {
+        print("It's too dark to see anything here.", 'dark-msg');
+        return;
+      }
+      print(game.items[found.id].description, 'item-desc');
+      return;
+    }
+
+    // Check scenery
+    const room = game.rooms[game.currentRoom];
+    if (!canSeeInRoom(game.currentRoom)) {
+      print("It's too dark to see anything here.", 'dark-msg');
+      return;
+    }
+    if (room.scenery && room.scenery[target] !== undefined) {
+      if (room.scenery[target] === null) {
+        // Trophy case handled above
+        print("Try: examine trophy case", 'system');
+      } else {
+        print(room.scenery[target], 'item-desc');
+      }
+      return;
+    }
+
+    print("You don't see that here.", 'error');
+    return;
+  }
+
+  // Take / get / pick up
+  const takeMatch = cmd.match(/^(?:take|get|pick up|grab)\s+(.+)$/);
+  if (takeMatch) {
+    const target = takeMatch[1].trim();
+    if (!canSeeInRoom(game.currentRoom)) {
+      print("It's too dark to find anything here. You grope around blindly.", 'dark-msg');
+      return;
+    }
+
+    // "take all"
+    if (target === 'all' || target === 'everything') {
+      const room = game.rooms[game.currentRoom];
+      const available = room.items.filter(id => !game.inventory.includes(id) && !game.trophyCaseItems.includes(id));
+      if (available.length === 0) {
+        print("There's nothing here to take.", 'error');
+        return;
+      }
+      for (const id of available) {
+        game.inventory.push(id);
+        if (id === 'lantern') game.hasLantern = true;
+        print(`Taken: ${game.items[id].name}${game.items[id].artifact ? ' [artifact]' : ''}`, 'artifact-msg');
+      }
+      updateCounter();
+      return;
+    }
+
+    const found = findItem(target);
+    if (found && found.location === 'room') {
+      game.inventory.push(found.id);
+      if (found.id === 'lantern') game.hasLantern = true;
+      print(`Taken: ${game.items[found.id].name}`, 'artifact-msg');
+      updateCounter();
+      return;
+    }
+    if (found && found.location === 'inventory') {
+      print('You already have that.', 'system');
+      return;
+    }
+    if (found && found.location === 'case') {
+      // Take from trophy case
+      game.trophyCaseItems = game.trophyCaseItems.filter(id => id !== found.id);
+      game.inventory.push(found.id);
+      print(`Removed from trophy case: ${game.items[found.id].name}`, 'system');
+      updateCounter();
+      return;
+    }
+    print("You can't take that.", 'error');
+    return;
+  }
+
+  // Drop
+  const dropMatch = cmd.match(/^(?:drop|discard)\s+(.+)$/);
+  if (dropMatch) {
+    const target = dropMatch[1].trim();
+    const found = findItem(target);
+    if (found && found.location === 'inventory') {
+      game.inventory = game.inventory.filter(id => id !== found.id);
+      if (found.id === 'lantern') game.hasLantern = false;
+      // Add to current room
+      if (!game.rooms[game.currentRoom].items.includes(found.id)) {
+        game.rooms[game.currentRoom].items.push(found.id);
+      }
+      print(`Dropped: ${game.items[found.id].name}`, 'system');
+      updateCounter();
+      return;
+    }
+    print("You're not carrying that.", 'error');
+    return;
+  }
+
+  // Put in trophy case
+  const putMatch = cmd.match(/^(?:put|place|insert|drop)\s+(.+?)(?:\s+(?:in|into|on|inside)\s+(?:the\s+)?(?:trophy\s*case|case|career\s+trophy\s*case))$/);
+  if (putMatch) {
+    if (game.currentRoom !== 'lobby') {
+      print("You need to be in the Career Center Lobby to put things in the trophy case.", 'error');
+      return;
+    }
+    const target = putMatch[1].trim();
+    if (target === 'all' || target === 'everything') {
+      const artifacts = game.inventory.filter(id => game.items[id].artifact);
+      if (artifacts.length === 0) {
+        print("You're not carrying any artifacts.", 'error');
+        return;
+      }
+      for (const id of artifacts) {
+        game.inventory = game.inventory.filter(x => x !== id);
+        game.trophyCaseItems.push(id);
+      }
+      const n = game.trophyCaseItems.length;
+      print(`You carefully place ${artifacts.length} artifact(s) in the trophy case. [${n} of 8 artifacts collected.]`, 'artifact-msg');
+      updateCounter();
+      checkWin();
+      return;
+    }
+    const found = findItem(target);
+    if (found && found.location === 'inventory') {
+      if (!game.items[found.id].artifact) {
+        print("Only career artifacts belong in the trophy case.", 'error');
+        return;
+      }
+      game.inventory = game.inventory.filter(id => id !== found.id);
+      game.trophyCaseItems.push(found.id);
+      const n = game.trophyCaseItems.length;
+      print(`You carefully place the ${game.items[found.id].name} in the trophy case. [${n} of 8 artifacts collected.]`, 'artifact-msg');
+      updateCounter();
+      checkWin();
+      return;
+    }
+    print("You're not carrying that.", 'error');
+    return;
+  }
+
+  // Help
+  if (cmd === 'help' || cmd === 'hint' || cmd === 'hints' || cmd === '?') {
+    printHelp();
+    return;
+  }
+
+  // Skills / Resume
+  if (cmd === 'skills' || cmd === 'resume' || cmd === 'qualifications') {
+    print('JOHN ESCOBEDO \u2014 KEY SKILLS\n\nBusiness Analysis: Requirements Elicitation, User Stories, Process Mapping, Gap Analysis, Stakeholder Management, Change Management\n\nQA Leadership: Test Planning, Regression Testing, UAT, CI/CD Testing, Accessibility/508 Testing, Agile/Scrum\n\nTools: JIRA/Xray, TestRail, GitHub, Chrome DevTools, SQL/JQL, JavaScript/HTML/CSS, Postman\n\nCommunication: Trilingual (English, Spanish, ASL), Cross-functional Collaboration, Mentoring, Public Speaking\n\nIndustries: Healthcare, Gaming, E-Commerce, Education, Government/VA, Robotics\n\nType "examine" on items you find to learn more about specific accomplishments.', 'item-desc');
+    return;
+  }
+
+  // Contact
+  if (cmd === 'contact' || cmd === 'email' || cmd === 'phone' || cmd === 'linkedin') {
+    print('CONTACT JOHN ESCOBEDO\n\nEmail: letmeshowyou@gmail.com\nPhone: (512) 299-3269\nLinkedIn: linkedin.com/in/johnesco\nLocation: Manor, TX', 'system');
+    return;
+  }
+
+  // Map
+  if (cmd === 'map') {
+    print('THE GREAT CAREER QUEST \u2014 MAP\n\n                    Career Center Entrance\n                           |\n                    Career Center Lobby ---- Performance Hall\n                     |           |              |-- DJ Booth [N]\n              Education Wing     |              |-- Karaoke Stage [S]\n              |-- San Jacinto [N]|              |-- Event Space [W]\n              |-- Art Inst. [E]  |\n              |-- Vista Col. [S] Creative District\n              |-- ASL Acad. [U]  |-- Animation Workshop [N]\n                                 |-- Design Studio [E]\n                    [DOWN]       |-- Teaching Hall [W]\n                       |\n                QA Dungeon Landing\n                |-- Game Testing [N] -- Robotics Lab [E]\n                |-- Virtual Worlds [E]\n                |-- Battle Arena [S]\n                |-- Healthcare [W] -- E-Commerce [S]\n                                        |-- Assessment [E]\n                                             |-- VA Vault [N]\n\n* Dark rooms (need lantern): Virtual Worlds, Battle Arena,\n  Healthcare Corridor, E-Commerce Lab, Assessment Chamber,\n  VA Vault, Robotics Lab', 'system');
+    return;
+  }
+
+  // About
+  if (cmd === 'about' || cmd === 'info' || cmd === 'credits') {
+    print('THE GREAT CAREER QUEST\nAn Interactive Resume by John Escobedo\n\nInspired by Zork (Infocom, 1980)\nBuilt with JavaScript, styled after the Quixe/GlkOte interface\n\nThis game contains real resume data spanning 25+ years of career experience across QA, business analysis, design, teaching, and entertainment.\n\nType "help" for commands, "skills" for a skills summary, or "contact" for contact information.', 'system');
+    return;
+  }
+
+  // Score
+  if (cmd === 'score') {
+    const carried = game.inventory.filter(id => game.items[id].artifact).length;
+    const cased = game.trophyCaseItems.length;
+    const total = carried + cased;
+    print(`You have found ${total} of 8 career artifacts.\n${cased} placed in the trophy case.\n${carried} in your inventory.\nRooms visited: your journey continues...`, 'system');
+    return;
+  }
+
+  // Wait
+  if (cmd === 'wait' || cmd === 'z') {
+    const msgs = [
+      'Time passes. A Slack notification pings somewhere in the distance.',
+      'You wait patiently. The fluorescent lights hum their eternal song.',
+      'Nothing happens. Somewhere, a JIRA ticket goes unassigned.',
+      'Time passes. You hear the distant sound of a standup meeting running long.',
+      'You wait. A tumbleweed of crumpled requirements documents rolls by.'
+    ];
+    print(msgs[Math.floor(Math.random() * msgs.length)], 'system');
+    return;
+  }
+
+  // Xyzzy
+  if (cmd === 'xyzzy') {
+    print('A hollow voice says, "That spell was deprecated in the last sprint."', 'system');
+    return;
+  }
+
+  // Plugh
+  if (cmd === 'plugh') {
+    print('A hollow voice says, "Please submit a feature request through the proper channels."', 'system');
+    return;
+  }
+
+  // Common invalid commands
+  if (cmd === 'quit' || cmd === 'q') {
+    print("You can't quit The Great Career Quest! (Just close the browser tab.)", 'system');
+    return;
+  }
+
+  if (cmd === 'save' || cmd === 'load' || cmd === 'restore') {
+    print("This browser-based version doesn't support save/load. But the career journey continues either way!", 'system');
+    return;
+  }
+
+  if (cmd === 'verbose' || cmd === 'brief' || cmd === 'superbrief') {
+    print("Room descriptions are always shown in full. There's a lot of career to explore!", 'system');
+    return;
+  }
+
+  print("I don't understand that command. Type \"help\" for a list of commands.", 'error');
+}
+
+function checkWin() {
+  if (game.trophyCaseItems.length === 8) {
+    print('\nAs you place the final artifact in the trophy case, the room fills with warm golden light. Every fluorescent bulb in the Career Center seems to burn a little brighter.', 'win-msg');
+    print('A voice echoes through the halls:', 'win-msg');
+    print('"Congratulations, adventurer! You have assembled all eight artifacts of John Escobedo\'s career \u2014 a journey spanning 25+ years across quality assurance, business analysis, creative design, teaching, and entertainment.\n\nFrom the QA Dungeons of game testing to the Creative Districts of animation, from healthcare corridors to battle arenas, each artifact tells a piece of the story. Together, they represent a career built on curiosity, adaptability, and the relentless pursuit of quality.\n\nThank you for playing The Great Career Quest!"', 'win-msg');
+    print('\n*** You have won ***\n', 'win-msg');
+    print('Contact John: letmeshowyou@gmail.com | (512) 299-3269 | linkedin.com/in/johnesco', 'system');
+    game.gameOver = true;
+  }
+}
+
+function printHelp() {
+  print('WELCOME TO THE GREAT CAREER QUEST\n\nYou are exploring the career of John Escobedo through this interactive text adventure.\n\nMOVEMENT:\n  north/south/east/west/up/down (or n/s/e/w/u/d)\n\nACTIONS:\n  look (l)         \u2014 Describe the current room\n  examine (x) OBJ  \u2014 Examine something closely\n  take OBJ         \u2014 Pick up an item\n  drop OBJ         \u2014 Drop an item\n  inventory (i)    \u2014 See what you\'re carrying\n  put OBJ in case  \u2014 Place an artifact in the trophy case\n  take all         \u2014 Take everything in the room\n\nINFORMATION:\n  help             \u2014 Show this help\n  map              \u2014 Display the game map\n  score            \u2014 Check your progress\n  skills / resume  \u2014 View skills summary\n  contact          \u2014 View contact information\n  about            \u2014 Game credits\n\nGOAL: Find all 8 career artifacts and place them in the Trophy Case in the Career Center Lobby.\n\nTIP: Some rooms in the QA Dungeon are dark. You\'ll need the Lantern of Experience (in the lobby) to explore them safely.', 'system');
+}
+
+// ---- INITIALIZATION ----
+function startGame() {
+  defineRooms();
+  defineItems();
+
+  print('THE GREAT CAREER QUEST', 'room-title');
+  print('An Interactive Resume by John Escobedo', 'system');
+  print('Inspired by Zork  |  Type "help" for commands\n', 'system');
+  printDivider();
+
+  displayRoom(game.currentRoom);
+}
+
+// ---- INPUT HANDLING ----
+input.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    const cmd = input.value.trim();
+    if (cmd) {
+      printDivider();
+      print('> ' + cmd, 'prompt-echo');
+      processCommand(cmd);
+    }
+    input.value = '';
+  }
+});
+
+// Focus input on click anywhere
+document.addEventListener('click', () => input.focus());
+
+// Start the game
+startGame();
+</script>
+</body>
+</html>
