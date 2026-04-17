@@ -18,6 +18,22 @@ let baseW = 512;
 let baseH = 512;
 let tileSizeCss = 8; // css pixels per tile at current zoom
 
+// --- Idle camera (documentary mode) ---
+const IDLE_TIMEOUT_MS = 18000;   // 18s of no interaction → enter idle
+const IDLE_HOLD_MS = 7000;       // hold on each subject 7s
+const IDLE_TRANSITION_MS = 1200; // zoom/pan CSS transition duration
+const IDLE_ESTAB_CHANCE = 0.15;  // 15% chance of wide establishing shot
+
+let idleActive = false;
+let idleTimer = null;        // setTimeout id for entering idle
+let idleHoldTimer = null;    // setTimeout id for next subject pick
+let idleRestoreZoom = 1;
+let idleRestoreScrollX = 0;
+let idleRestoreScrollY = 0;
+let idleLastBotId = -1;
+let idleRecentIds = [];      // ring buffer of last 3 visited bot ids
+let idleProgrammaticScroll = false;
+
 async function boot() {
   const wasm = await init();
   memory = wasm.memory;
@@ -109,6 +125,7 @@ function setupUI() {
   });
 
   document.getElementById("btn-reseed").addEventListener("click", () => {
+    resetIdleTimer();
     const seed = (Math.random() * 0xffffffff) >>> 0;
     world = new Gridland(seed);
     window.__gl = world;
@@ -138,6 +155,20 @@ function setupUI() {
     }
     refreshPanels();
   });
+
+  // --- Idle camera listeners ---
+  // Any user interaction resets the idle timer. When idle mode is active,
+  // the first interaction exits it and restores the previous viewport.
+  const idleEvents = ["pointerdown", "keydown", "wheel"];
+  for (const evt of idleEvents) {
+    document.addEventListener(evt, resetIdleTimer, { passive: true });
+  }
+  // Scroll on the viewport — but ignore programmatic scrolls from the camera.
+  const scroller = document.getElementById("world-scroll");
+  scroller.addEventListener("scroll", () => {
+    if (!idleProgrammaticScroll) resetIdleTimer();
+  }, { passive: true });
+  resetIdleTimer();
 }
 
 function scrollSelectedIntoView() {
@@ -148,6 +179,166 @@ function scrollSelectedIntoView() {
   const targetX = b.x * tileSizeCss + tileSizeCss / 2 - scroller.clientWidth / 2;
   const targetY = b.y * tileSizeCss + tileSizeCss / 2 - scroller.clientHeight / 2;
   scroller.scrollTo({ left: targetX, top: targetY, behavior: "smooth" });
+}
+
+// --- Idle camera system ---
+
+function resetIdleTimer() {
+  if (idleActive) exitIdleMode();
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(enterIdleMode, IDLE_TIMEOUT_MS);
+}
+
+function enterIdleMode() {
+  if (!world) return;
+  const scroller = document.getElementById("world-scroll");
+  idleRestoreZoom = zoom;
+  idleRestoreScrollX = scroller.scrollLeft;
+  idleRestoreScrollY = scroller.scrollTop;
+  idleActive = true;
+  idleRecentIds = [];
+  idleLastBotId = -1;
+  idlePickNext();
+}
+
+function exitIdleMode() {
+  if (!idleActive) return;
+  idleActive = false;
+  clearTimeout(idleHoldTimer);
+  // Restore previous viewport
+  setIdleZoom(idleRestoreZoom);
+  const scroller = document.getElementById("world-scroll");
+  idleProgrammaticScroll = true;
+  setTimeout(() => {
+    scroller.scrollTo({
+      left: idleRestoreScrollX,
+      top: idleRestoreScrollY,
+      behavior: "smooth",
+    });
+    setTimeout(() => { idleProgrammaticScroll = false; }, IDLE_TRANSITION_MS);
+  }, 50);
+}
+
+function setIdleZoom(level) {
+  zoom = level;
+  worldView.style.transition = `width ${IDLE_TRANSITION_MS}ms ease-in-out, height ${IDLE_TRANSITION_MS}ms ease-in-out`;
+  applyZoom();
+  // Update toolbar active state to match
+  document.querySelectorAll(".toolbar button[data-zoom]").forEach((b) => {
+    b.classList.toggle("active", parseInt(b.dataset.zoom, 10) === zoom);
+  });
+  setTimeout(() => { worldView.style.transition = ""; }, IDLE_TRANSITION_MS + 50);
+}
+
+function idlePanTo(tileX, tileY) {
+  const scroller = document.getElementById("world-scroll");
+  const px = tileX * tileSizeCss + tileSizeCss / 2 - scroller.clientWidth / 2;
+  const py = tileY * tileSizeCss + tileSizeCss / 2 - scroller.clientHeight / 2;
+  idleProgrammaticScroll = true;
+  scroller.scrollTo({ left: px, top: py, behavior: "smooth" });
+  setTimeout(() => { idleProgrammaticScroll = false; }, IDLE_TRANSITION_MS);
+}
+
+function scoreInterest() {
+  if (!world) return [];
+  const bots = JSON.parse(world.bots_summary());
+  const bubbles = JSON.parse(world.bubbles());
+  const bubbleIds = new Set(bubbles.map((b) => b.id));
+
+  // Pre-compute positions for neighbor counting
+  const positions = bots.map((b) => ({ id: b.id, x: b.x, y: b.y }));
+
+  return bots.map((b) => {
+    let score = 0;
+
+    // Active thought bubble — strongest signal of something happening
+    if (bubbleIds.has(b.id)) score += 50;
+
+    // Goal-based interest
+    const g = b.goal;
+    if (g === "fleeing") score += 35;
+    else if (g === "socializing") score += 30;
+    else if (g === "cooking" || g === "building" || g === "crafting") score += 25;
+    else if (g === "chopping" || g === "delivering" || g === "mourning" || g === "healing") score += 20;
+    else if (g === "fishing" || g === "farming") score += 15;
+    else if (g === "foraging" || g === "gathering" || g === "warming") score += 10;
+
+    // Clustering — nearby bots means community moment
+    let neighbors = 0;
+    for (const p of positions) {
+      if (p.id === b.id) continue;
+      const d = Math.abs(p.x - b.x) + Math.abs(p.y - b.y);
+      if (d <= 6) neighbors++;
+    }
+    score += Math.min(neighbors * 5, 25);
+
+    // Has any thought text
+    if (b.thought) score += 5;
+
+    // Variety penalties — don't revisit the same bot
+    if (idleRecentIds.includes(b.id)) score -= 40;
+    if (b.id === idleLastBotId) score -= 30;
+
+    return { id: b.id, x: b.x, y: b.y, score, neighbors };
+  }).sort((a, z) => z.score - a.score);
+}
+
+function idlePickNext() {
+  if (!idleActive || !world) return;
+
+  const candidates = scoreInterest();
+  if (candidates.length === 0) {
+    // No bots alive — retry later
+    idleHoldTimer = setTimeout(idlePickNext, 2000);
+    return;
+  }
+
+  let target;
+  let newZoom;
+
+  // Establishing shot — occasional wide pull-back
+  if (Math.random() < IDLE_ESTAB_CHANCE) {
+    target = candidates[Math.floor(Math.random() * candidates.length)];
+    newZoom = 1;
+  } else {
+    // Weighted pick from top 3
+    const pool = candidates.slice(0, Math.min(3, candidates.length));
+    const totalScore = pool.reduce((s, c) => s + Math.max(c.score, 1), 0);
+    let roll = Math.random() * totalScore;
+    target = pool[0];
+    for (const c of pool) {
+      roll -= Math.max(c.score, 1);
+      if (roll <= 0) { target = c; break; }
+    }
+    // Zoom based on crowd density
+    newZoom = target.neighbors >= 3 ? 2 : 3;
+  }
+
+  // Track for variety
+  idleLastBotId = target.id;
+  idleRecentIds.push(target.id);
+  if (idleRecentIds.length > 3) idleRecentIds.shift();
+
+  // Transition: zoom first, then pan after a short delay (so container resizes)
+  setIdleZoom(newZoom);
+  setTimeout(() => {
+    if (!idleActive) return;
+    // Re-fetch position — bot may have moved during zoom transition
+    try {
+      const fresh = JSON.parse(world.bots_summary());
+      const bot = fresh.find((b) => b.id === target.id);
+      if (bot) {
+        idlePanTo(bot.x, bot.y);
+      } else {
+        idlePanTo(target.x, target.y);
+      }
+    } catch (_) {
+      idlePanTo(target.x, target.y);
+    }
+  }, 200);
+
+  // Schedule next pick
+  idleHoldTimer = setTimeout(idlePickNext, IDLE_HOLD_MS);
 }
 
 function loop() {
