@@ -304,6 +304,22 @@ pub struct Bot {
     /// Cooldown before we say a passing greeting to a neighbour.
     pub greet_cooldown: u16,
 
+    // -- Frustration / obstacle tracking ----------------------------------
+    /// Ticks spent making no forward progress toward the current target.
+    /// Rises every movement tick the bot stays in place or moves sideways;
+    /// resets whenever actual forward progress is made. High values drive
+    /// desperate obstacle-clearing attempts — anyone can bash through
+    /// a tree or rock, they just do it slowly and painfully.
+    pub stuck_ticks: u16,
+    /// Position + type of the tile that's currently blocking us.
+    /// Populated by step_toward_target when blocked; cleared on progress.
+    /// Shared during social interactions so friends learn about obstacles.
+    pub blocked_by: Option<(i32, i32, u8)>, // (x, y, tile_type_u8)
+    /// Accumulated clearing effort on the current obstacle. Fills up toward
+    /// a threshold that depends on tool + industriousness. Resets when the
+    /// obstacle changes or is cleared.
+    pub clear_progress: u16,
+
     // -- Craft / tools ---------------------------------------------------
     /// Stone-axe durability. 0 = no tool. Each chop consumes 1.
     pub has_tool: u8,
@@ -312,6 +328,8 @@ pub struct Bot {
     pub craft_progress: u16,
     /// Trees this bot has personally felled. Small bragging stat.
     pub trees_chopped: u32,
+    /// Rocks this bot has personally broken.
+    pub rocks_broken: u32,
 
     // -- Hauling / carrying ---------------------------------------------
     /// What the bot is physically carrying right now.
@@ -403,9 +421,13 @@ impl Bot {
             gift_cooldown: 0,
             chat_cooldown: 0,
             greet_cooldown: 0,
+            stuck_ticks: 0,
+            blocked_by: None,
+            clear_progress: 0,
             has_tool: 0,
             craft_progress: 0,
             trees_chopped: 0,
+            rocks_broken: 0,
             carrying: Carry::None,
             carry_ticks: 0,
             deliveries: 0,

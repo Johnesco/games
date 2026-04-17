@@ -489,18 +489,21 @@ fn forget_stale(world: &mut World, idx: usize) {
 
 /// Toolmaker-specific action: craft a stone axe at a rock, or fell a
 /// complaint tree when we've got one and we're standing next to it.
+/// Crafting and proactive clearing. Toolmakers are the specialists who can
+/// knap new tools from rock and chop trees deliberately (not just when
+/// frustrated). But any bot with a tool in hand will opportunistically swing
+/// at a complaint tree they're passing.
+///
+/// Desperate bare-handed clearing is handled in step_toward_target via the
+/// frustration system — this function covers the SKILLED path.
 fn try_craft_or_chop(world: &mut World, idx: usize) {
-    // Toolmakers are the specialists, but in an emergency any bot with an
-    // axe can take a swing at a blocking tree (just can't craft new axes).
-    let is_toolmaker = world.bots[idx].job == crate::bot::Job::Toolmaker;
-    if !is_toolmaker && world.bots[idx].has_tool == 0 {
-        return;
-    }
     let (bx, by) = (world.bots[idx].x, world.bots[idx].y);
+    let is_toolmaker = world.bots[idx].job == crate::bot::Job::Toolmaker;
 
-    // Craft: need to be adjacent to a Rock, have no tool, AND be a Toolmaker.
-    // Non-toolmakers skip straight to the chop logic — they can swing an axe
-    // someone left behind but can't knap a new one.
+    // --- Crafting (Toolmaker specialty) ---
+    // Toolmakers knap stone axes by standing next to rock. The knowledge
+    // of how to shape stone is a learned skill — only Toolmakers have it.
+    // Other bots can USE a found tool but can't make one.
     if world.bots[idx].has_tool == 0 && is_toolmaker {
         let mut rock_adj = false;
         for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
@@ -511,16 +514,11 @@ fn try_craft_or_chop(world: &mut World, idx: usize) {
         }
         if rock_adj {
             world.bots[idx].craft_progress = world.bots[idx].craft_progress.saturating_add(1);
-            // Takes ~90 ticks of knapping — about a second of screen time at 2×.
             if world.bots[idx].craft_progress >= 90 {
                 world.bots[idx].craft_progress = 0;
                 world.bots[idx].has_tool = 3;
                 world.bots[idx].boredom = (world.bots[idx].boredom - 8.0).max(0.0);
                 world.bots[idx].mood = (world.bots[idx].mood + 4.0).min(100.0);
-                // Knapping flakes produce a loose stone offcut on an
-                // adjacent grass tile. Without this the Shrine chain has
-                // no fuel and never fires — stones otherwise don't exist
-                // on the map.
                 for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
                     let (nx, ny) = (bx + dx, by + dy);
                     if matches!(world.tile(nx, ny), Tile::Grass | Tile::Path) {
@@ -531,45 +529,45 @@ fn try_craft_or_chop(world: &mut World, idx: usize) {
                 let name = world.bots[idx].name.clone();
                 world.log(format!("{} knapped a stone axe", name));
                 let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
-                let line = pick(
-                    &[
-                        "A good edge. Sharp and true.",
-                        "Stone remembers how to cut.",
-                        "There — a proper axe.",
-                        "Ready to clear the path.",
-                    ],
-                    seed,
-                );
-                world.bots[idx].announce_now(line);
+                world.bots[idx].announce_now(pick(&[
+                    "A good edge. Sharp and true.",
+                    "Stone remembers how to cut.",
+                    "There — a proper axe.",
+                    "Ready to clear the path.",
+                ], seed));
             }
         }
         return;
     }
 
-    // Chop: complained tree first (the reason we walked here), otherwise
-    // any adjacent tree. Without this fallback, toolmakers carry axes
-    // past dense groves that are overwhelming the map but not "on the list"
-    // and the forest never thins.
+    // --- Proactive chopping (anyone with a tool) ---
+    // Any bot holding a tool will swing at a nearby tree if:
+    //   - It's a complaint tree (someone asked for help), OR
+    //   - The bot is a Toolmaker (they chop on principle)
+    // This is the "skilled" path — fast, efficient, one swing per tree.
+    if world.bots[idx].has_tool == 0 {
+        return;
+    }
+
     let mut target_tree: Option<(i32, i32)> = None;
     let mut any_tree: Option<(i32, i32)> = None;
     for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
         let (tx, ty) = (bx + dx, by + dy);
-        if world.tile(tx, ty) != Tile::Tree {
-            continue;
-        }
-        if any_tree.is_none() {
-            any_tree = Some((tx, ty));
-        }
+        if world.tile(tx, ty) != Tile::Tree { continue; }
+        if any_tree.is_none() { any_tree = Some((tx, ty)); }
         if world.tree_complaints.iter().any(|(cx, cy)| *cx == tx && *cy == ty) {
             target_tree = Some((tx, ty));
             break;
         }
     }
-    let target_tree = target_tree.or(any_tree);
-    if let Some((tx, ty)) = target_tree {
-        // Chop turns the tile into a Log (haulable, burnable). If the
-        // bot just cleared it for path purposes, someone else can come
-        // along and gather it for the fire.
+    // Non-toolmakers only chop complaint trees (helping a friend).
+    // Toolmakers chop any adjacent tree (it's their calling).
+    let to_chop = if is_toolmaker {
+        target_tree.or(any_tree)
+    } else {
+        target_tree
+    };
+    if let Some((tx, ty)) = to_chop {
         world.set_tile(tx, ty, Tile::Log);
         world.logs_chopped_total = world.logs_chopped_total.saturating_add(1);
         world.tree_complaints.retain(|(x, y)| !(*x == tx && *y == ty));
@@ -577,19 +575,19 @@ fn try_craft_or_chop(world: &mut World, idx: usize) {
         world.bots[idx].trees_chopped = world.bots[idx].trees_chopped.saturating_add(1);
         world.bots[idx].mood = (world.bots[idx].mood + 6.0).min(100.0);
         world.bots[idx].boredom = (world.bots[idx].boredom - 10.0).max(0.0);
+        // Reset frustration — the obstacle is gone.
+        world.bots[idx].stuck_ticks = 0;
+        world.bots[idx].blocked_by = None;
+        world.bots[idx].clear_progress = 0;
         let name = world.bots[idx].name.clone();
-        world.log(format!("{} cleared a tree at ({},{})", name, tx, ty));
+        world.log(format!("{} felled a tree at ({},{})", name, tx, ty));
         let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
-        let line = pick(
-            &[
-                "Down it comes. Path open.",
-                "That's one less wall.",
-                "Better. Much better.",
-                "A good swing. The grove thins.",
-            ],
-            seed,
-        );
-        world.bots[idx].announce_now(line);
+        world.bots[idx].announce_now(pick(&[
+            "Down it comes. Path open.",
+            "That's one less wall.",
+            "Better. Much better.",
+            "A good swing. The grove thins.",
+        ], seed));
     }
 }
 
@@ -2231,46 +2229,228 @@ fn step_toward_target(world: &mut World, idx: usize) {
         world.mark_step(nx, ny);
     }
 
-    // If we made no forward progress and there's a Tree sitting on the
-    // direct line to the target, complain about it so a Toolmaker can
-    // come fell it. Skip for toolmakers themselves (they'd be the ones
-    // chopping) and for Flee (nobody cares about trees when running).
+    // --- Frustration tracking ---
+    // When the bot makes no forward progress, frustration builds.
+    // This drives two implicit behaviours:
+    //   1. The bot starts working on clearing the obstacle (slow for everyone,
+    //      fast for skilled/tooled bots — anyone CAN break through, but
+    //      calling a specialist is better).
+    //   2. Stress and boredom rise, making the bot more likely to socialise
+    //      and mention the obstacle, which spreads knowledge through memory
+    //      and relationships.
     let end_dist = (target.0 - world.bots[idx].x).abs() + (target.1 - world.bots[idx].y).abs();
-    if end_dist >= start_dist
-        && world.bots[idx].job != crate::bot::Job::Toolmaker
-        && world.bots[idx].goal != Goal::Flee
-    {
+    if end_dist >= start_dist && world.bots[idx].goal != Goal::Flee {
+        world.bots[idx].stuck_ticks = world.bots[idx].stuck_ticks.saturating_add(1);
+
+        // Identify what's blocking us on the direct line to the target.
         let ddx = (target.0 - bx).signum();
         let ddy = (target.1 - by).signum();
-        let mut complained = false;
+        let mut blocker: Option<(i32, i32, Tile)> = None;
         if ddx != 0 {
-            let (cx, cy) = (bx + ddx, by);
-            if world.tile(cx, cy) == Tile::Tree {
-                world.push_complaint(cx, cy);
-                complained = true;
+            let t = world.tile(bx + ddx, by);
+            if matches!(t, Tile::Tree | Tile::Rock) {
+                blocker = Some((bx + ddx, by, t));
             }
         }
-        if ddy != 0 {
-            let (cx, cy) = (bx, by + ddy);
-            if world.tile(cx, cy) == Tile::Tree {
-                world.push_complaint(cx, cy);
-                complained = true;
+        if blocker.is_none() && ddy != 0 {
+            let t = world.tile(bx, by + ddy);
+            if matches!(t, Tile::Tree | Tile::Rock) {
+                blocker = Some((bx, by + ddy, t));
             }
         }
-        if complained {
-            // Quiet inner annoyance — feeds the inspector, occasionally surfaces.
-            let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
-            let line = pick(
-                &[
-                    "A tree in the way. Again.",
-                    "I can't get through here.",
-                    "Someone should clear this grove.",
-                    "Blocked. Always blocked by the same tree.",
-                ],
-                seed,
-            );
-            world.bots[idx].set_thought(line);
-            world.bots[idx].boredom = (world.bots[idx].boredom + 0.4).min(100.0);
+        // Check diagonals too — sometimes both cardinal directions are open
+        // but the real obstacle is at a slight angle.
+        if blocker.is_none() && ddx != 0 && ddy != 0 {
+            let t = world.tile(bx + ddx, by + ddy);
+            if matches!(t, Tile::Tree | Tile::Rock) {
+                blocker = Some((bx + ddx, by + ddy, t));
+            }
+        }
+
+        if let Some((ox, oy, otile)) = blocker {
+            // Track which obstacle we're working on. If it changed, reset
+            // clear_progress — we're facing a new barrier.
+            let prev = world.bots[idx].blocked_by;
+            let same_obstacle = prev.map_or(false, |(px, py, _)| px == ox && py == oy);
+            if !same_obstacle {
+                world.bots[idx].blocked_by = Some((ox, oy, otile as u8));
+                world.bots[idx].clear_progress = 0;
+            }
+
+            // Trees still go on the global complaint list so bots with tools
+            // learn about them. This is the social "someone should clear this"
+            // signal — not a magic dispatcher, just a shared memory.
+            if otile == Tile::Tree {
+                world.push_complaint(ox, oy);
+            }
+
+            // Implicit frustration effects: stress and boredom build when stuck.
+            // This makes the bot more likely to socialise, mention the obstacle,
+            // and attract help from friends or toolmakers.
+            world.bots[idx].stress = (world.bots[idx].stress + 0.15).min(100.0);
+            world.bots[idx].boredom = (world.bots[idx].boredom + 0.3).min(100.0);
+
+            // Frustrated thoughts emerge naturally from being stuck.
+            if world.bots[idx].stuck_ticks % 60 == 30 {
+                let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
+                let line = match otile {
+                    Tile::Tree => pick(&[
+                        "A tree in the way. Again.",
+                        "I can't get through here.",
+                        "Someone should clear this grove.",
+                        "Blocked. Always blocked.",
+                    ], seed),
+                    Tile::Rock => pick(&[
+                        "Solid rock. Can't get past.",
+                        "This boulder won't move itself.",
+                        "If I had better tools…",
+                        "There has to be a way through.",
+                    ], seed),
+                    _ => "Something's in the way.".to_string(),
+                };
+                world.bots[idx].set_thought(line);
+            }
+
+            // --- Desperate clearing attempt ---
+            // After being stuck long enough, anyone starts working on the
+            // obstacle. This is IMPLICIT: it's not "if job == Toolmaker",
+            // it's "how frustrated am I" × "what tools and skill do I have".
+            //
+            // Clearing speed depends on:
+            //   - has_tool > 0: fast (tool is the right equipment)
+            //   - industriousness: skilled hands work faster even bare-handed
+            //   - bravery: willing to swing harder at rock
+            //
+            // Trees: tool → instant (1 tick). Bare-handed → 80-200 ticks
+            //   depending on industriousness. Costly: energy drain, mood hit.
+            // Rocks: tool → 40-80 ticks. Bare-handed → 200-500 ticks.
+            //   Very costly: energy drain, big mood hit, stress.
+            //   Result: rock becomes Stone (haulable crafting material).
+            let stuck = world.bots[idx].stuck_ticks;
+            let patience_threshold: u16 = if world.bots[idx].has_tool > 0 {
+                // Someone with a tool starts clearing after brief frustration
+                8
+            } else {
+                // Bare-handed bots wait longer before resorting to desperate measures
+                // Low patience = brave + industrious. High patience = timid + lazy.
+                let patience = 1.5 - world.bots[idx].traits.bravery * 0.4
+                    - world.bots[idx].traits.industriousness * 0.4;
+                (80.0 * patience) as u16
+            };
+
+            if stuck >= patience_threshold {
+                // Attempt to clear. Progress accumulates each movement tick.
+                let ind = world.bots[idx].traits.industriousness;
+                let brave = world.bots[idx].traits.bravery;
+                let has_tool = world.bots[idx].has_tool > 0;
+
+                // Effort per tick: tools = 10 base, bare hands = 1-3 base
+                let effort: u16 = if has_tool {
+                    10 + (ind * 5.0) as u16
+                } else {
+                    1 + (ind * 1.5 + brave * 0.5) as u16
+                };
+
+                world.bots[idx].clear_progress = world.bots[idx].clear_progress.saturating_add(effort);
+
+                // Energy cost: clearing is exhausting, especially bare-handed.
+                let energy_cost = if has_tool { 0.08 } else { 0.15 };
+                world.bots[idx].energy = (world.bots[idx].energy - energy_cost).max(0.0);
+
+                // Clearing thresholds by material:
+                let threshold: u16 = match otile {
+                    Tile::Tree => 60,  // lighter — wood yields to hands
+                    Tile::Rock => 200, // heavy — stone is stubborn
+                    _ => 999,
+                };
+
+                if world.bots[idx].clear_progress >= threshold {
+                    // Cleared! Transform the obstacle.
+                    let result_tile = match otile {
+                        Tile::Tree => Tile::Log,
+                        Tile::Rock => Tile::Stone,
+                        _ => Tile::Grass,
+                    };
+                    world.set_tile(ox, oy, result_tile);
+
+                    // Tool use consumes durability.
+                    if has_tool {
+                        world.bots[idx].has_tool = world.bots[idx].has_tool.saturating_sub(1);
+                    }
+
+                    // Stats
+                    if otile == Tile::Tree {
+                        world.logs_chopped_total = world.logs_chopped_total.saturating_add(1);
+                        world.bots[idx].trees_chopped = world.bots[idx].trees_chopped.saturating_add(1);
+                        world.tree_complaints.retain(|(x, y)| !(*x == ox && *y == oy));
+                    } else if otile == Tile::Rock {
+                        world.bots[idx].rocks_broken = world.bots[idx].rocks_broken.saturating_add(1);
+                    }
+
+                    // Emotional payoff — relief from clearing the obstacle.
+                    // Bigger mood boost for bare-handed (they earned it).
+                    let mood_boost = if has_tool { 4.0 } else { 8.0 };
+                    world.bots[idx].mood = (world.bots[idx].mood + mood_boost).min(100.0);
+                    world.bots[idx].boredom = (world.bots[idx].boredom - 10.0).max(0.0);
+                    world.bots[idx].stress = (world.bots[idx].stress - 5.0).max(0.0);
+                    world.bots[idx].reputation = (world.bots[idx].reputation + 1).min(200);
+
+                    // Reset frustration state.
+                    world.bots[idx].stuck_ticks = 0;
+                    world.bots[idx].blocked_by = None;
+                    world.bots[idx].clear_progress = 0;
+
+                    let name = world.bots[idx].name.clone();
+                    let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
+                    if has_tool {
+                        let tile_name = if otile == Tile::Tree { "tree" } else { "rock" };
+                        world.log(format!("{} cleared a {} with their axe", name, tile_name));
+                        world.bots[idx].announce(pick(&[
+                            "Down it comes. Path open.",
+                            "That's one less wall.",
+                            "Clear. Move on.",
+                        ], seed));
+                    } else {
+                        match otile {
+                            Tile::Tree => {
+                                world.log(format!("{} tore down a tree bare-handed", name));
+                                world.bots[idx].announce(pick(&[
+                                    "My hands are raw, but it's down.",
+                                    "Finally. Took everything I had.",
+                                    "No axe, no problem. Just pain.",
+                                    "Splinters everywhere. Worth it.",
+                                ], seed));
+                            }
+                            Tile::Rock => {
+                                world.log(format!("{} broke through rock with bare hands", name));
+                                world.bots[idx].announce(pick(&[
+                                    "Stone yields. Eventually everything does.",
+                                    "My knuckles are bleeding. But I'm through.",
+                                    "Never thought I'd break a rock. Desperation helps.",
+                                    "That was the hardest thing I've ever done.",
+                                ], seed));
+                            }
+                            _ => {}
+                        }
+                        // Bare-handed clearing is painful — mood dip from the effort
+                        // (partially offset by the relief above).
+                        world.bots[idx].mood = (world.bots[idx].mood - 3.0).max(-100.0);
+                    }
+                }
+            }
+        } else {
+            // No clearable obstacle on the direct line — might be blocked
+            // by water or map edge. Just note frustration.
+            world.bots[idx].boredom = (world.bots[idx].boredom + 0.2).min(100.0);
+        }
+    } else {
+        // Made forward progress — frustration dissipates.
+        if world.bots[idx].stuck_ticks > 0 {
+            world.bots[idx].stuck_ticks = world.bots[idx].stuck_ticks.saturating_sub(3);
+            if world.bots[idx].stuck_ticks == 0 {
+                world.bots[idx].blocked_by = None;
+                world.bots[idx].clear_progress = 0;
+            }
         }
     }
 }

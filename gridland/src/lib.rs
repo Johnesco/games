@@ -460,7 +460,7 @@ fn bot_to_json(b: &Bot, partner_name: Option<&str>) -> String {
          \"dominant\":\"{}\",\"job\":\"{}\",\"speed\":{},\"goal\":\"{}\",\"thought\":\"{}\",\
          \"home\":{},\"home_name\":{},\"age\":{},\
          \"chatting\":{},\"gifts_given\":{},\"gifts_received\":{},\
-         \"has_tool\":{},\"trees_chopped\":{},\
+         \"has_tool\":{},\"trees_chopped\":{},\"rocks_broken\":{},\
          \"carrying\":{},\"deliveries\":{},\"reputation\":{},\"berries_cooked\":{},\
          \"memory\":[{}],\"recent\":[{}],\"relations\":[{}]}}",
         b.id,
@@ -499,6 +499,7 @@ fn bot_to_json(b: &Bot, partner_name: Option<&str>) -> String {
         b.gifts_received,
         b.has_tool,
         b.trees_chopped,
+        b.rocks_broken,
         carrying_json,
         b.deliveries,
         b.reputation,
