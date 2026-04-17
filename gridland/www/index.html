@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Gridland — a tiny watchable world</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>GRIDLAND</h1>
+    <div class="stats" id="stats">loading&hellip;</div>
+  </header>
+
+  <main class="layout">
+    <section class="world">
+      <div class="world-scroll" id="world-scroll">
+        <div class="world-view" id="world-view" style="width:512px; height:512px">
+          <canvas id="world" width="512" height="512"></canvas>
+          <div class="bubbles" id="bubbles"></div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button data-speed="0" id="btn-pause">&#9616;&#9616;</button>
+        <button data-speed="1">1&times;</button>
+        <button data-speed="2" class="active">2&times;</button>
+        <button data-speed="4">4&times;</button>
+        <button data-speed="8">8&times;</button>
+
+        <span class="sep"></span>
+
+        <span class="grp-label">zoom</span>
+        <button data-zoom="1" class="zoom active">1x</button>
+        <button data-zoom="2" class="zoom">2x</button>
+        <button data-zoom="3" class="zoom">3x</button>
+        <button data-zoom="4" class="zoom">4x</button>
+
+        <span class="sep"></span>
+
+        <button data-tool="select" class="tool active" id="tool-select">select</button>
+        <button data-tool="berry" class="tool">drop berry</button>
+        <button data-tool="rock" class="tool">place rock</button>
+        <button data-tool="fire" class="tool">light fire</button>
+        <button data-tool="clear" class="tool">clear</button>
+
+        <span class="sep"></span>
+
+        <button id="btn-reseed" title="new world">reseed</button>
+      </div>
+
+      <p class="hint">
+        Click a bot to inspect. Zoom in to see each little face up close.
+        Thought bubbles pop up as bots have new thoughts.
+      </p>
+    </section>
+
+    <aside class="panel">
+      <div class="card bots-card">
+        <h3>Residents</h3>
+        <p class="residents-hint">Tap a name to open its mind. Tap again to close.</p>
+        <ul class="bots" id="bots"></ul>
+      </div>
+
+      <div class="card log-card">
+        <h3>Happenings</h3>
+        <ul class="log" id="log"></ul>
+      </div>
+
+      <div class="card legend">
+        <h3>Jobs</h3>
+        <ul class="jobs-legend">
+          <li><b>forager</b> hunts berries</li>
+          <li><b>builder</b> raises homes</li>
+          <li><b>scout</b> maps far places</li>
+          <li><b>guardian</b> patrols, confronts</li>
+          <li><b>socialite</b> visits friends</li>
+          <li><b>farmer</b> tills fields near water, plants saplings</li>
+          <li><b>fisherman</b> crafts a pole, catches fish at the shore</li>
+          <li><b>hermit</b> stays near home</li>
+          <li><b>toolmaker</b> knaps stone axes, fells blocking trees</li>
+          <li><b>cook</b> turns raw berries into cooked ones at the fire</li>
+          <li><b>digger</b> hauls logs &amp; stones from here to there</li>
+          <li><b>healer</b> sits with graves, comforts the stressed</li>
+        </ul>
+      </div>
+
+      <div class="card legend">
+        <h3>Goal dots</h3>
+        <ul>
+          <li><span class="dot" style="background:#e65050"></span> hungry</li>
+          <li><span class="dot" style="background:#6e6ec8"></span> resting</li>
+          <li><span class="dot" style="background:#e68cc8"></span> social</li>
+          <li><span class="dot" style="background:#8cdcf0"></span> exploring</li>
+          <li><span class="dot" style="background:#5aaa5a"></span> foraging</li>
+          <li><span class="dot" style="background:#e6b45a"></span> building</li>
+          <li><span class="dot" style="background:#c8a06e"></span> crafting</li>
+          <li><span class="dot" style="background:#d2823c"></span> chopping</li>
+          <li><span class="dot" style="background:#5ab4dc"></span> drinking</li>
+          <li><span class="dot" style="background:#f09646"></span> cooking</li>
+          <li><span class="dot" style="background:#aab450"></span> gathering</li>
+          <li><span class="dot" style="background:#b48cdc"></span> delivering</li>
+          <li><span class="dot" style="background:#faaa64"></span> warming</li>
+          <li><span class="dot" style="background:#8c8ca0"></span> mourning</li>
+          <li><span class="dot" style="background:#b4dca0"></span> healing</li>
+          <li><span class="dot" style="background:#ff5050"></span> fleeing</li>
+          <li><span class="dot" style="background:#50b4c8"></span> fishing</li>
+          <li><span class="dot" style="background:#a0c850"></span> farming</li>
+          <li><span class="dot" style="background:#b4b4b4"></span> idle</li>
+        </ul>
+      </div>
+
+      <div class="card legend">
+        <h3>World</h3>
+        <ul class="jobs-legend">
+          <li><b>berry</b> quick meal, cures hunger</li>
+          <li><b>mushroom</b> shaded-ground jolt — +energy</li>
+          <li><b>tree</b> grown forest; drops berries nearby</li>
+          <li><b>fire</b> pulsing gathering-spot — +mood, +warmth</li>
+          <li><b>home</b> where tired bots return to rest</li>
+          <li><b>log</b> felled tree; fuel for a fire</li>
+          <li><b>stone</b> knapped rock; haul home to raise a shrine</li>
+          <li><b>cooked berry</b> richer meal — big mood lift</li>
+          <li><b>path</b> worn grass from repeated walking — travel here is easier</li>
+          <li><b>puddle</b> rain leftover; quick drink, evaporates</li>
+          <li><b>ash</b> burned-out fire; eventually returns to grass or sapling</li>
+          <li><b>shrine</b> calms the stressed; grown from home + stone deliveries</li>
+          <li><b>grave</b> where a bot fell; healers sit vigil here</li>
+          <li><b>field</b> tilled farmland near water — periodically grows berries</li>
+          <li><b>fish</b> caught by fishermen at the shore — hearty meal</li>
+        </ul>
+      </div>
+
+      <div class="card legend">
+        <h3>What to watch for</h3>
+        <ul class="jobs-legend">
+          <li>Two bots standing still together → <b>chatting</b>. Watch the bubbles.</li>
+          <li>Friends <b>gift</b> food memories when one is hungry.</li>
+          <li>Saplings &rarr; forests &rarr; full trees over hundreds of ticks.</li>
+          <li>Mature trees block movement &mdash; bots log a <b>complaint</b>; a <b>toolmaker</b> knaps a stone axe and fells the tree, which drops a <b>log</b>.</li>
+          <li>A <b>digger</b> hauls the log to a fire (fuel) or a stone home-ward (shrine).</li>
+          <li>A <b>cook</b> standing between a fire and a berry turns it into a <b>cooked berry</b>.</li>
+          <li>Rain leaves <b>puddles</b> &mdash; free drinks until they dry up.</li>
+          <li>Repeated walking over grass wears a <b>path</b>; paths thin out if unused.</li>
+          <li>Fires burn out into <b>ash</b>; ash decays back to grass or a sapling.</li>
+          <li>A fallen bot leaves a <b>grave</b>; healers mourn there and a flower sometimes blooms.</li>
+          <li>Warmth drops at night and in rain &mdash; bots drift toward fires and homes.</li>
+        </ul>
+      </div>
+    </aside>
+  </main>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

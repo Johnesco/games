@@ -1,0 +1,15 @@
+{
+  "name": "gridland",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "gridland_bg.wasm",
+    "gridland.js",
+    "gridland.d.ts"
+  ],
+  "main": "gridland.js",
+  "types": "gridland.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}

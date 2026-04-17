@@ -1,0 +1,5 @@
+/target
+*.swp
+*.swo
+.DS_Store
+# Keep www/pkg — it's the built WASM needed for GitHub Pages
