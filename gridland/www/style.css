@@ -129,6 +129,10 @@ html, body {
   transform-origin: top left;
 }
 
+.world-view.idle-cam {
+  transition: transform 1200ms ease-in-out;
+}
+
 canvas#world {
   image-rendering: pixelated;
   image-rendering: crisp-edges;

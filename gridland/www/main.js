@@ -190,11 +190,27 @@ function resetIdleTimer() {
 }
 
 function enterIdleMode() {
-  if (!world) return;
+  if (!world || idleActive) return;
   const scroller = document.getElementById("world-scroll");
   idleRestoreZoom = zoom;
   idleRestoreScrollX = scroller.scrollLeft;
   idleRestoreScrollY = scroller.scrollTop;
+
+  // Reset to zoom 1 so the world-view fills the scroller exactly.
+  // On mobile the !important rules already ensure this; on desktop it
+  // makes the CSS-transform math uniform across both layouts.
+  zoom = 1;
+  applyZoom();
+  document.querySelectorAll(".toolbar button[data-zoom]").forEach((b) => {
+    b.classList.toggle("active", parseInt(b.dataset.zoom, 10) === 1);
+  });
+
+  scroller.style.overflow = "hidden";
+  idleProgrammaticScroll = true;
+  scroller.scrollTo(0, 0);
+  setTimeout(() => { idleProgrammaticScroll = false; }, 100);
+
+  worldView.classList.add("idle-cam");
   idleActive = true;
   idleRecentIds = [];
   idleLastBotId = -1;
@@ -205,38 +221,57 @@ function exitIdleMode() {
   if (!idleActive) return;
   idleActive = false;
   clearTimeout(idleHoldTimer);
-  // Restore previous viewport
-  setIdleZoom(idleRestoreZoom);
-  const scroller = document.getElementById("world-scroll");
-  idleProgrammaticScroll = true;
-  setTimeout(() => {
-    scroller.scrollTo({
-      left: idleRestoreScrollX,
-      top: idleRestoreScrollY,
-      behavior: "smooth",
-    });
-    setTimeout(() => { idleProgrammaticScroll = false; }, IDLE_TRANSITION_MS);
-  }, 50);
-}
 
-function setIdleZoom(level) {
-  zoom = level;
-  worldView.style.transition = `width ${IDLE_TRANSITION_MS}ms ease-in-out, height ${IDLE_TRANSITION_MS}ms ease-in-out`;
+  // Remove transition class first so the reset is instant
+  worldView.classList.remove("idle-cam");
+  worldView.style.transform = "";
+
+  const scroller = document.getElementById("world-scroll");
+  scroller.style.overflow = "";
+
+  // Restore zoom
+  zoom = idleRestoreZoom;
   applyZoom();
-  // Update toolbar active state to match
   document.querySelectorAll(".toolbar button[data-zoom]").forEach((b) => {
     b.classList.toggle("active", parseInt(b.dataset.zoom, 10) === zoom);
   });
-  setTimeout(() => { worldView.style.transition = ""; }, IDLE_TRANSITION_MS + 50);
+
+  // Restore scroll position
+  idleProgrammaticScroll = true;
+  scroller.scrollTo({
+    left: idleRestoreScrollX,
+    top: idleRestoreScrollY,
+    behavior: "smooth",
+  });
+  setTimeout(() => { idleProgrammaticScroll = false; }, IDLE_TRANSITION_MS);
 }
 
-function idlePanTo(tileX, tileY) {
+function setIdleCameraView(tileX, tileY, scale) {
   const scroller = document.getElementById("world-scroll");
-  const px = tileX * tileSizeCss + tileSizeCss / 2 - scroller.clientWidth / 2;
-  const py = tileY * tileSizeCss + tileSizeCss / 2 - scroller.clientHeight / 2;
-  idleProgrammaticScroll = true;
-  scroller.scrollTo({ left: px, top: py, behavior: "smooth" });
-  setTimeout(() => { idleProgrammaticScroll = false; }, IDLE_TRANSITION_MS);
+  const viewW = scroller.clientWidth;
+  const viewH = scroller.clientHeight;
+
+  const tileNative = world.tile_size();
+  const gridCols = baseW / tileNative;
+  const gridRows = baseH / tileNative;
+
+  // Fractional position of the tile centre in [0, 1]
+  const fx = (tileX + 0.5) / gridCols;
+  const fy = (tileY + 0.5) / gridRows;
+
+  // CSS-pixel position within the world-view element
+  const px = fx * viewW;
+  const py = fy * viewH;
+
+  // Translate so the target tile lands at the viewport centre, then
+  // clamp so we never reveal space beyond the world edges.
+  let tx = viewW / 2 - scale * px;
+  let ty = viewH / 2 - scale * py;
+  tx = Math.min(0, Math.max(viewW * (1 - scale), tx));
+  ty = Math.min(0, Math.max(viewH * (1 - scale), ty));
+
+  worldView.style.transform =
+    `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${scale})`;
 }
 
 function scoreInterest() {
@@ -294,12 +329,12 @@ function idlePickNext() {
   }
 
   let target;
-  let newZoom;
+  let newScale;
 
   // Establishing shot — occasional wide pull-back
   if (Math.random() < IDLE_ESTAB_CHANCE) {
     target = candidates[Math.floor(Math.random() * candidates.length)];
-    newZoom = 1;
+    newScale = 1;
   } else {
     // Weighted pick from top 3
     const pool = candidates.slice(0, Math.min(3, candidates.length));
@@ -311,7 +346,7 @@ function idlePickNext() {
       if (roll <= 0) { target = c; break; }
     }
     // Zoom based on crowd density
-    newZoom = target.neighbors >= 3 ? 2 : 3;
+    newScale = target.neighbors >= 3 ? 2 : 3;
   }
 
   // Track for variety
@@ -319,23 +354,18 @@ function idlePickNext() {
   idleRecentIds.push(target.id);
   if (idleRecentIds.length > 3) idleRecentIds.shift();
 
-  // Transition: zoom first, then pan after a short delay (so container resizes)
-  setIdleZoom(newZoom);
-  setTimeout(() => {
-    if (!idleActive) return;
-    // Re-fetch position — bot may have moved during zoom transition
-    try {
-      const fresh = JSON.parse(world.bots_summary());
-      const bot = fresh.find((b) => b.id === target.id);
-      if (bot) {
-        idlePanTo(bot.x, bot.y);
-      } else {
-        idlePanTo(target.x, target.y);
-      }
-    } catch (_) {
-      idlePanTo(target.x, target.y);
+  // Re-fetch position just before applying — bot may have moved
+  try {
+    const fresh = JSON.parse(world.bots_summary());
+    const bot = fresh.find((b) => b.id === target.id);
+    if (bot) {
+      setIdleCameraView(bot.x, bot.y, newScale);
+    } else {
+      setIdleCameraView(target.x, target.y, newScale);
     }
-  }, 200);
+  } catch (_) {
+    setIdleCameraView(target.x, target.y, newScale);
+  }
 
   // Schedule next pick
   idleHoldTimer = setTimeout(idlePickNext, IDLE_HOLD_MS);
