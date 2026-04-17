@@ -37,6 +37,21 @@ pub enum Tile {
     CookedFish = 22,  // cooked fish; the richest food — big hunger+mood+energy
 }
 
+/// Nutritional properties of a food tile. Returned by `Tile::food_props()`.
+/// Adding a new food type means adding one entry here — everything else
+/// in the simulation queries these properties instead of matching tile variants.
+pub struct FoodProps {
+    pub hunger_relief: f32,
+    pub energy_gain: f32,
+    pub mood_boost: f32,
+    pub stress_relief: f32,
+    /// If true, the tile is consumed (replaced with Grass) when eaten.
+    pub consumed: bool,
+    /// Minimum hunger level before the bot will eat this food.
+    /// 0 means always eat when found.
+    pub hunger_threshold: f32,
+}
+
 impl Tile {
     pub fn from_u8(v: u8) -> Tile {
         match v {
@@ -96,6 +111,103 @@ impl Tile {
             Tile::Sand => -1,
             Tile::Shrine => 1,
             _ => 0,
+        }
+    }
+
+    /// Nutritional properties for edible tiles. Returns `None` for tiles that
+    /// aren't food (including raw Fish, which must be cooked first, and Fire,
+    /// whose ambient warmth effects are handled separately).
+    pub fn food_props(self) -> Option<FoodProps> {
+        match self {
+            Tile::Berry => Some(FoodProps {
+                hunger_relief: 55.0,
+                energy_gain: 0.0,
+                mood_boost: 10.0,
+                stress_relief: 0.0,
+                consumed: true,
+                hunger_threshold: 15.0,
+            }),
+            Tile::CookedBerry => Some(FoodProps {
+                hunger_relief: 70.0,
+                energy_gain: 0.0,
+                mood_boost: 18.0,
+                stress_relief: 8.0,
+                consumed: true,
+                hunger_threshold: 10.0,
+            }),
+            Tile::Mushroom => Some(FoodProps {
+                hunger_relief: 15.0,
+                energy_gain: 30.0,
+                mood_boost: 3.0,
+                stress_relief: 0.0,
+                consumed: true,
+                hunger_threshold: 0.0,
+            }),
+            Tile::CookedFish => Some(FoodProps {
+                hunger_relief: 85.0,
+                energy_gain: 20.0,
+                mood_boost: 22.0,
+                stress_relief: 12.0,
+                consumed: true,
+                hunger_threshold: 5.0,
+            }),
+            // Fish is NOT food — must be cooked first.
+            // Fire's ambient effects are handled separately (not eaten).
+            _ => None,
+        }
+    }
+
+    /// Convert a haulable tile to its carried form. Inverse of Carry::to_tile().
+    /// Returns None for non-haulable tiles.
+    pub fn to_carry(self) -> Option<crate::bot::Carry> {
+        use crate::bot::Carry;
+        match self {
+            Tile::Berry => Some(Carry::Berry),
+            Tile::Log => Some(Carry::Log),
+            Tile::Stone => Some(Carry::Stone),
+            Tile::CookedBerry => Some(Carry::CookedBerry),
+            Tile::Mushroom => Some(Carry::Mushroom),
+            Tile::Fish => Some(Carry::Fish),
+            Tile::CookedFish => Some(Carry::CookedFish),
+            _ => None,
+        }
+    }
+
+    /// Can this tile be cooked at a fire? (Raw ingredient → cooked version)
+    pub fn is_cookable(self) -> bool {
+        matches!(self, Tile::Berry | Tile::Fish)
+    }
+
+    /// What does this tile become after cooking? Returns None if not cookable.
+    pub fn cooked_form(self) -> Option<Tile> {
+        match self {
+            Tile::Berry => Some(Tile::CookedBerry),
+            Tile::Fish => Some(Tile::CookedFish),
+            _ => None,
+        }
+    }
+
+    /// Is this an obstacle that can be cleared by a frustrated bot?
+    pub fn is_clearable(self) -> bool {
+        matches!(self, Tile::Tree | Tile::Rock)
+    }
+
+    /// Clearing effort threshold — how much work to break through.
+    /// Higher = harder. Returns None for non-clearable tiles.
+    pub fn clear_effort(self) -> Option<u16> {
+        match self {
+            Tile::Tree => Some(60),
+            Tile::Rock => Some(200),
+            _ => None,
+        }
+    }
+
+    /// What does this tile become when cleared?
+    pub fn cleared_into(self) -> Tile {
+        match self {
+            Tile::Tree => Tile::Log,
+            Tile::Rock => Tile::Stone,
+            _ => Tile::Grass,
         }
     }
 }
@@ -735,6 +847,37 @@ impl World {
     pub fn is_night(&self) -> bool {
         let p = self.day_phase();
         p < 0.15 || p > 0.85
+    }
+
+    /// Check if any adjacent tile (4-directional) matches a predicate.
+    pub fn has_adjacent(&self, x: i32, y: i32, pred: impl Fn(Tile) -> bool) -> bool {
+        for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
+            if pred(self.tile(x + dx, y + dy)) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Find nearest tile within radius matching a predicate (Manhattan distance).
+    pub fn find_nearest_where(&self, bx: i32, by: i32, radius: i32, pred: impl Fn(Tile) -> bool) -> Option<(i32, i32)> {
+        let mut best: Option<(i32, (i32, i32))> = None;
+        for dy in -radius..=radius {
+            for dx in -radius..=radius {
+                let x = bx + dx;
+                let y = by + dy;
+                if x < 0 || y < 0 || x >= W as i32 || y >= H as i32 {
+                    continue;
+                }
+                if pred(self.tile(x, y)) {
+                    let d = dx.abs() + dy.abs();
+                    if best.as_ref().map_or(true, |(bd, _)| d < *bd) {
+                        best = Some((d, (x, y)));
+                    }
+                }
+            }
+        }
+        best.map(|(_, p)| p)
     }
 }
 

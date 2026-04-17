@@ -1,4 +1,5 @@
 use crate::rng::Rng;
+use crate::world::Tile;
 use std::collections::HashMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -177,6 +178,46 @@ impl Carry {
             Carry::Fish => [100, 160, 210],
             Carry::CookedFish => [240, 170, 90],
         }
+    }
+
+    /// Convert a carried item back to its tile form (for dropping).
+    pub fn to_tile(self) -> Option<Tile> {
+        match self {
+            Carry::None => None,
+            Carry::Berry => Some(Tile::Berry),
+            Carry::Log => Some(Tile::Log),
+            Carry::Stone => Some(Tile::Stone),
+            Carry::CookedBerry => Some(Tile::CookedBerry),
+            Carry::Mushroom => Some(Tile::Mushroom),
+            Carry::Fish => Some(Tile::Fish),
+            Carry::CookedFish => Some(Tile::CookedFish),
+        }
+    }
+
+    /// Can this item be cooked at a fire?
+    pub fn is_cookable(self) -> bool {
+        matches!(self, Carry::Berry | Carry::Fish)
+    }
+
+    /// What does this item become after cooking? Returns None if not cookable.
+    pub fn cooked_form(self) -> Option<Carry> {
+        match self {
+            Carry::Berry => Some(Carry::CookedBerry),
+            Carry::Fish => Some(Carry::CookedFish),
+            _ => None,
+        }
+    }
+
+    /// Is this a food item (edible when carried)?
+    pub fn is_food(self) -> bool {
+        matches!(self, Carry::Berry | Carry::CookedBerry | Carry::Mushroom | Carry::CookedFish)
+    }
+
+    /// Does this item need to go to a fire rather than home?
+    /// Used by delivery routing — items that need fire processing
+    /// or that serve as fuel should route to fires.
+    pub fn wants_fire(self) -> bool {
+        matches!(self, Carry::Log | Carry::Fish)
     }
 }
 

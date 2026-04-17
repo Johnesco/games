@@ -71,8 +71,7 @@ pub fn think_and_act(world: &mut World, idx: usize, snap: &[(i32, i32, bool, u32
             // Shorter commitment delay when switching to an urgent task-in-progress
             // like cooking. Carrying a cookable item means the bot is mid-chain —
             // the full 4s contemplation stalls the cooking pipeline.
-            let carrying_cookable = matches!(bot.carrying, Carry::Berry | Carry::Fish);
-            let urgent_task = carrying_cookable && matches!(new_goal, Goal::Cook | Goal::Deliver);
+            let urgent_task = bot.carrying.is_cookable() && matches!(new_goal, Goal::Cook | Goal::Deliver);
             bot.commitment_delay = if urgent_task { 80 } else { 500 };
             bot.announce_now(line);
         } else {
@@ -505,13 +504,7 @@ fn try_craft_or_chop(world: &mut World, idx: usize) {
     // of how to shape stone is a learned skill — only Toolmakers have it.
     // Other bots can USE a found tool but can't make one.
     if world.bots[idx].has_tool == 0 && is_toolmaker {
-        let mut rock_adj = false;
-        for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-            if world.tile(bx + dx, by + dy) == Tile::Rock {
-                rock_adj = true;
-                break;
-            }
-        }
+        let rock_adj = world.has_adjacent(bx, by, |t| t == Tile::Rock);
         if rock_adj {
             world.bots[idx].craft_progress = world.bots[idx].craft_progress.saturating_add(1);
             if world.bots[idx].craft_progress >= 90 {
@@ -594,125 +587,64 @@ fn try_craft_or_chop(world: &mut World, idx: usize) {
 fn try_interact(world: &mut World, idx: usize) {
     let (bx, by) = { let b = &world.bots[idx]; (b.x, b.y) };
     let t = world.tile(bx, by);
-    // A cook on mission-critical errand shouldn't eat the berry they came for.
-    // Same for gather/deliver goals that were planning to haul this tile.
-    // BUT — if hunger ≥ 85 survival overrides mission. A dead cook cooks nothing.
-    let job = world.bots[idx].job;
+
+    // --- Food (property-driven) ---
+    // Any tile with food_props is edible. Adding a new food type means adding
+    // one entry in Tile::food_props() — this code handles it automatically.
+    // Guard: bots on a hauling/cooking mission won't eat their payload
+    // unless starving. This is a desire-level decision, not a food-type one.
     let goal = world.bots[idx].goal;
     let desperate = world.bots[idx].hunger >= 85.0;
-    let reserved_pickup = !desperate
-        && ((job == Job::Cook && goal == Goal::Cook)
-            || matches!(goal, Goal::Gather | Goal::Deliver));
-    match t {
-        Tile::Berry => {
-            if reserved_pickup {
-                return;
-            }
-            if world.bots[idx].hunger > 15.0 {
-                let was_starving = world.bots[idx].hunger > 80.0;
-                world.bots[idx].hunger = (world.bots[idx].hunger - 55.0).max(0.0);
-                world.bots[idx].mood = (world.bots[idx].mood + 10.0).min(100.0);
+    let on_errand = !desperate && matches!(goal, Goal::Cook | Goal::Gather | Goal::Deliver);
+
+    if let Some(props) = t.food_props() {
+        if on_errand { return; }
+        if world.bots[idx].hunger > props.hunger_threshold {
+            let was_starving = world.bots[idx].hunger > 80.0;
+            world.bots[idx].hunger = (world.bots[idx].hunger - props.hunger_relief).max(0.0);
+            world.bots[idx].energy = (world.bots[idx].energy + props.energy_gain).min(100.0);
+            world.bots[idx].mood = (world.bots[idx].mood + props.mood_boost).min(100.0);
+            world.bots[idx].stress = (world.bots[idx].stress - props.stress_relief).max(0.0);
+            if props.consumed {
                 world.set_tile(bx, by, Tile::Grass);
+            }
+            if was_starving {
                 let name = world.bots[idx].name.clone();
-                if was_starving {
-                    world.log(format!("{} ate just in time", name));
-                    let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
-                    let line = pick(
-                        &[
-                            "Saved. That berry saved me.",
-                            "Oh thank the hills.",
-                            "I can think again.",
-                        ],
-                        seed,
-                    );
-                    world.bots[idx].announce(line);
-                }
-            }
-        }
-        Tile::CookedBerry => {
-            // Better than a raw berry — fuller hunger cure, mood spike.
-            if world.bots[idx].hunger > 10.0 {
-                world.bots[idx].hunger = (world.bots[idx].hunger - 70.0).max(0.0);
-                world.bots[idx].mood = (world.bots[idx].mood + 18.0).min(100.0);
-                world.bots[idx].stress = (world.bots[idx].stress - 8.0).max(0.0);
-                world.set_tile(bx, by, Tile::Grass);
+                world.log(format!("{} ate just in time", name));
+                let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
+                world.bots[idx].announce(pick(&[
+                    "Saved. That saved me.",
+                    "Oh thank the hills.",
+                    "I can think again.",
+                ], seed));
+            } else if props.hunger_relief >= 60.0 {
+                // Announce satisfying meals (cooked food, fish)
                 let seed = (world.tick as u32).wrapping_add(world.bots[idx].id).wrapping_mul(157);
-                let line = pick(
-                    &[
-                        "Warm and sweet. A cooked berry.",
-                        "Whoever cooked this — thank you.",
-                        "Properly done. Better than raw.",
-                        "Real food, for once.",
-                    ],
-                    seed,
-                );
-                world.bots[idx].announce(line);
+                world.bots[idx].announce(pick(&[
+                    "Now that's a proper meal.",
+                    "Whoever prepared this — thank you.",
+                    "Better than I expected.",
+                    "Real food, for once.",
+                ], seed));
             }
         }
-        Tile::Mushroom => {
-            // A mushroom is less food than it is a pick-me-up. Always taken
-            // when found — mild hunger cure, big energy jolt, small mood lift.
-            world.bots[idx].hunger = (world.bots[idx].hunger - 15.0).max(0.0);
-            world.bots[idx].energy = (world.bots[idx].energy + 30.0).min(100.0);
-            world.bots[idx].mood = (world.bots[idx].mood + 3.0).min(100.0);
-            world.set_tile(bx, by, Tile::Grass);
-            let seed = (world.tick as u32).wrapping_add(world.bots[idx].id).wrapping_mul(91);
-            let line = pick(
-                &[
-                    "Strange little bite. My legs buzz.",
-                    "A mushroom. Curious aftertaste.",
-                    "Woke me right up.",
-                    "The forest shares.",
-                ],
-                seed,
-            );
-            world.bots[idx].announce(line);
-        }
-        Tile::Fish => {
-            // Raw fish — NOT edible. Can only be picked up and cooked at fire.
-            // try_pickup handles grabbing it; nothing happens here.
-        }
-        Tile::CookedFish => {
-            // Cooked fish — the richest food source. Huge hunger cure, mood
-            // boost, energy boost. The payoff for the entire fishing→cooking chain.
-            if reserved_pickup {
-                return;
-            }
-            if world.bots[idx].hunger > 5.0 {
-                world.bots[idx].hunger = (world.bots[idx].hunger - 85.0).max(0.0);
-                world.bots[idx].mood = (world.bots[idx].mood + 22.0).min(100.0);
-                world.bots[idx].energy = (world.bots[idx].energy + 20.0).min(100.0);
-                world.bots[idx].stress = (world.bots[idx].stress - 12.0).max(0.0);
-                world.set_tile(bx, by, Tile::Grass);
-                let seed = (world.tick as u32).wrapping_add(world.bots[idx].id).wrapping_mul(211);
-                let line = pick(
-                    &[
-                        "Fresh fish. Nothing better.",
-                        "That's a real meal. Cooked right.",
-                        "The river feeds us all.",
-                        "Worth every moment at the fire.",
-                    ],
-                    seed,
-                );
-                world.bots[idx].announce(line);
-            }
-        }
+        return;
+    }
+
+    // --- Non-food tile interactions (ambient effects) ---
+    match t {
         Tile::Fire => {
-            // Standing in the fire counts as warming up — steady mood gain and
-            // social relief. Not consumed.
             world.bots[idx].mood = (world.bots[idx].mood + 0.6).min(100.0);
             world.bots[idx].social = (world.bots[idx].social - 0.4).max(0.0);
             world.bots[idx].boredom = (world.bots[idx].boredom - 0.2).max(0.0);
             world.bots[idx].warmth = (world.bots[idx].warmth + 0.4).min(100.0);
         }
         Tile::Puddle => {
-            // Walking on a puddle is a free small drink.
             if world.bots[idx].thirst > 20.0 {
                 world.bots[idx].thirst = (world.bots[idx].thirst - 10.0).max(0.0);
             }
         }
         Tile::Grave => {
-            // Standing on a grave briefly saddens.
             world.bots[idx].mood = (world.bots[idx].mood - 0.2).max(-100.0);
             world.bots[idx].stress = (world.bots[idx].stress + 0.05).min(100.0);
         }
@@ -784,15 +716,9 @@ fn try_pickup(world: &mut World, idx: usize) {
     if !wants_pickup {
         return;
     }
-    let new_carry = match t {
-        Tile::Berry => Carry::Berry,
-        Tile::Log => Carry::Log,
-        Tile::Stone => Carry::Stone,
-        Tile::CookedBerry => Carry::CookedBerry,
-        Tile::Mushroom => Carry::Mushroom,
-        Tile::Fish => Carry::Fish,
-        Tile::CookedFish => Carry::CookedFish,
-        _ => return,
+    let new_carry = match t.to_carry() {
+        Some(c) => c,
+        None => return,
     };
     // Job-specific filter: cooks only pick up berries (their supply chain).
     // Fishermen only pick up fish. This prevents specialists from getting
@@ -858,14 +784,8 @@ fn try_deliver(world: &mut World, idx: usize) {
             }
         }
     } else if c == Carry::Stone {
-        // Adjacent home → build a Shrine on a nearby grass tile.
-        let mut has_home = false;
-        for (dx, dy) in [(0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)] {
-            if matches!(world.tile(bx + dx, by + dy), Tile::Home) {
-                has_home = true;
-                break;
-            }
-        }
+        // Adjacent home (or standing on one) → build a Shrine on a nearby grass tile.
+        let has_home = here == Tile::Home || world.has_adjacent(bx, by, |t| t == Tile::Home);
         if has_home {
             for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
                 let (nx, ny) = (bx + dx, by + dy);
@@ -913,14 +833,7 @@ fn try_deliver(world: &mut World, idx: usize) {
         // intent die from pathfinding fatigue.
         let mut made_shrine = false;
         if c == Carry::Stone {
-            let mut near_home = false;
-            for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-                if matches!(world.tile(bx + dx, by + dy), Tile::Home) {
-                    near_home = true;
-                    break;
-                }
-            }
-            if near_home {
+            if world.has_adjacent(bx, by, |t| t == Tile::Home) {
                 world.set_tile(bx, by, Tile::Shrine);
                 world.bots[idx].carrying = Carry::None;
                 world.bots[idx].deliveries = world.bots[idx].deliveries.saturating_add(1);
@@ -932,17 +845,9 @@ fn try_deliver(world: &mut World, idx: usize) {
             }
         }
         if !made_shrine {
-            let drop_tile = match c {
-                Carry::Berry => Tile::Berry,
-                Carry::Log => Tile::Log,
-                Carry::Stone => Tile::Stone,
-                Carry::CookedBerry => Tile::CookedBerry,
-                Carry::Mushroom => Tile::Mushroom,
-                Carry::Fish => Tile::Fish,
-                Carry::CookedFish => Tile::CookedFish,
-                Carry::None => return,
-            };
-            world.set_tile(bx, by, drop_tile);
+            if let Some(drop_tile) = c.to_tile() {
+                world.set_tile(bx, by, drop_tile);
+            }
             world.bots[idx].carrying = Carry::None;
         }
     }
@@ -1003,12 +908,9 @@ fn try_cook_nearby(world: &mut World, idx: usize) {
 
     // (b) Cook-in-hand: carrying Berry → CookedBerry, Fish → CookedFish.
     let carry = world.bots[idx].carrying;
-    let (is_cookable_carry, cooked_carry, label) = match carry {
-        Carry::Berry => (true, Carry::CookedBerry, "a berry"),
-        Carry::Fish => (true, Carry::CookedFish, "a fish"),
-        _ => (false, Carry::None, ""),
-    };
-    if is_cookable_carry {
+    if carry.is_cookable() {
+        let cooked_carry = carry.cooked_form().unwrap(); // safe: is_cookable guarantees Some
+        let label = if carry == Carry::Fish { "a fish" } else { "a berry" };
         // Key by bot ID (offset into a range that can't collide with tile coords)
         // so progress accumulates even if the bot shifts a tile while cooking.
         let key = (idx as i32 + 100000, 0);
@@ -1048,20 +950,24 @@ fn try_cook_nearby(world: &mut World, idx: usize) {
         return;
     }
 
-    // (a) Tile cook: find an adjacent Berry or Fish on the ground to cook.
-    let mut cookable_pos: Option<(i32, i32, bool)> = None; // (x, y, is_fish)
+    // (a) Tile cook: find an adjacent cookable tile on the ground.
+    let mut cookable_pos: Option<(i32, i32, Tile)> = None;
     for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)] {
         let (nx, ny) = (bx + dx, by + dy);
-        match world.tile(nx, ny) {
-            Tile::Fish => { cookable_pos = Some((nx, ny, true)); break; }
-            Tile::Berry => { if cookable_pos.is_none() { cookable_pos = Some((nx, ny, false)); } }
-            _ => {}
+        let nt = world.tile(nx, ny);
+        if nt.is_cookable() {
+            // Prefer fish (higher value) over berry
+            if nt == Tile::Fish || cookable_pos.is_none() {
+                cookable_pos = Some((nx, ny, nt));
+            }
+            if nt == Tile::Fish { break; }
         }
     }
-    let (bxp, byp, is_fish) = match cookable_pos {
+    let (bxp, byp, raw_tile) = match cookable_pos {
         Some(p) => p,
         None => return,
     };
+    let is_fish = raw_tile == Tile::Fish;
     let prog = world.cook_progress.get(&(bxp, byp)).copied().unwrap_or(0);
     let prog = prog.saturating_add(1);
     let base_t: u16 = if is_fish { 50 } else { 30 };
@@ -1070,7 +976,7 @@ fn try_cook_nearby(world: &mut World, idx: usize) {
         aroma_pulse(world, idx, bx, by);
     }
     if prog >= threshold {
-        let cooked_tile = if is_fish { Tile::CookedFish } else { Tile::CookedBerry };
+        let cooked_tile = raw_tile.cooked_form().unwrap_or(Tile::CookedBerry);
         let label = if is_fish { "a fish" } else { "a berry" };
         world.set_tile(bxp, byp, cooked_tile);
         world.cook_progress.remove(&(bxp, byp));
@@ -1276,14 +1182,7 @@ fn try_fish(world: &mut World, idx: usize) {
         return;
     }
     let (bx, by) = (world.bots[idx].x, world.bots[idx].y);
-    let mut water_adj = false;
-    for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-        if matches!(world.tile(bx + dx, by + dy), Tile::Water | Tile::Puddle) {
-            water_adj = true;
-            break;
-        }
-    }
-    if !water_adj {
+    if !world.has_adjacent(bx, by, |t| t.is_drinkable()) {
         return;
     }
     // Non-fishermen are half speed.
@@ -1347,14 +1246,7 @@ fn try_farm(world: &mut World, idx: usize) {
         return;
     }
     // Don't over-field: check that there isn't already a field adjacent.
-    let mut field_adj = false;
-    for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-        if world.tile(bx + dx, by + dy) == Tile::Field {
-            field_adj = true;
-            break;
-        }
-    }
-    if field_adj {
+    if world.has_adjacent(bx, by, |t| t == Tile::Field) {
         return;
     }
     world.set_tile(bx, by, Tile::Field);
@@ -1743,7 +1635,7 @@ fn choose_goal(world: &World, idx: usize, snap: &[(i32, i32, bool, u32)]) -> Goa
     // → pick up → walk to fire → cook in hand → carry cooked item home.
     // If the goal flips mid-journey the bot wastes 1000+ ticks on commitment
     // delays before it ever reaches a fire.
-    let carrying_cookable = matches!(bot.carrying, Carry::Berry | Carry::Fish);
+    let carrying_cookable = bot.carrying.is_cookable();
     let carrying_fish = bot.carrying == Carry::Fish;
     let cook_score = if j == Job::Cook && carrying_cookable {
         // Cook carrying an item that needs a fire — override deliver.
@@ -1872,21 +1764,21 @@ fn pick_target(world: &mut World, idx: usize, _snap: &[(i32, i32, bool, u32)]) {
 
     let still_valid = if let Some((tx, ty)) = world.bots[idx].target {
         match goal {
-            Goal::Eat => matches!(world.tile(tx, ty), Tile::Berry | Tile::CookedBerry | Tile::Mushroom),
+            Goal::Eat => world.tile(tx, ty).is_food(),
             Goal::Rest => matches!(world.tile(tx, ty), Tile::Home) || world.bots[idx].home == Some((tx, ty)),
             Goal::Craft => world.tile(tx, ty) == Tile::Rock,
             Goal::Chop => world.tile(tx, ty) == Tile::Tree
                 && world.tree_complaints.iter().any(|(cx, cy)| *cx == tx && *cy == ty),
-            Goal::Drink => matches!(world.tile(tx, ty), Tile::Water | Tile::Puddle)
-                || is_adjacent_to(world, tx, ty, |t| matches!(t, Tile::Water | Tile::Puddle)),
+            Goal::Drink => world.tile(tx, ty).is_drinkable()
+                || world.has_adjacent(tx, ty, |t| t.is_drinkable()),
             Goal::Cook => matches!(world.tile(tx, ty), Tile::Fire),
             Goal::Gather => world.tile(tx, ty).is_haulable(),
             Goal::Deliver => (tx - bx).abs() + (ty - by).abs() > 0,
             Goal::Warm => matches!(world.tile(tx, ty), Tile::Fire),
             Goal::Mourn => matches!(world.tile(tx, ty), Tile::Grave),
             Goal::Heal => matches!(world.tile(tx, ty), Tile::Shrine | Tile::Fire | Tile::Home),
-            Goal::Fish => is_adjacent_to(world, tx, ty, |t| matches!(t, Tile::Water | Tile::Puddle))
-                || matches!(world.tile(tx, ty), Tile::Puddle),
+            Goal::Fish => world.has_adjacent(tx, ty, |t| t.is_drinkable())
+                || world.tile(tx, ty) == Tile::Puddle,
             Goal::Farm => matches!(world.tile(tx, ty), Tile::Field | Tile::Grass),
             _ => (tx - bx).abs() + (ty - by).abs() > 0,
         }
@@ -1927,10 +1819,11 @@ fn pick_target(world: &mut World, idx: usize, _snap: &[(i32, i32, bool, u32)]) {
             .or_else(|| find_water_edge(world, bx, by, 25)),
         Goal::Cook => {
             // Two phases of cook's journey:
-            //   not carrying anything → go to a berry (pick it up on arrival)
-            //   carrying a berry → go to a fire (cook in hand on arrival)
+            //   carrying a cookable item → head to fire (cook in hand on arrival)
+            //   empty-handed → go find food to pick up
+            //   anything else → find a cook spot or just a fire
             let carry = world.bots[idx].carrying;
-            if carry == Carry::Berry {
+            if carry.is_cookable() {
                 world.bots[idx]
                     .nearest_mem(|m| matches!(m.kind, MemKind::Fire))
                     .map(|m| (m.x, m.y))
@@ -1971,15 +1864,6 @@ fn pick_target(world: &mut World, idx: usize, _snap: &[(i32, i32, bool, u32)]) {
     world.bots[idx].target = new_target;
 }
 
-fn is_adjacent_to(world: &World, x: i32, y: i32, pred: impl Fn(Tile) -> bool) -> bool {
-    for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-        if pred(world.tile(x + dx, y + dy)) {
-            return true;
-        }
-    }
-    false
-}
-
 /// Find an edge tile that borders water/puddle — you stand there to drink.
 fn find_water_edge(world: &World, bx: i32, by: i32, radius: i32) -> Option<(i32, i32)> {
     let mut best: Option<(i32, (i32, i32))> = None;
@@ -1996,20 +1880,10 @@ fn find_water_edge(world: &World, bx: i32, by: i32, radius: i32) -> Option<(i32,
                 if best.as_ref().map_or(true, |(bd, _)| d < *bd) {
                     best = Some((d, (x, y)));
                 }
-            } else if t.walkable() {
-                // Does any neighbour have water?
-                let mut adj_water = false;
-                for (ax, ay) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-                    if matches!(world.tile(x + ax, y + ay), Tile::Water | Tile::Puddle) {
-                        adj_water = true;
-                        break;
-                    }
-                }
-                if adj_water {
-                    let d = dx.abs() + dy.abs();
-                    if best.as_ref().map_or(true, |(bd, _)| d < *bd) {
-                        best = Some((d, (x, y)));
-                    }
+            } else if t.walkable() && world.has_adjacent(x, y, |t| t.is_drinkable()) {
+                let d = dx.abs() + dy.abs();
+                if best.as_ref().map_or(true, |(bd, _)| d < *bd) {
+                    best = Some((d, (x, y)));
                 }
             }
         }
@@ -2043,28 +1917,28 @@ fn find_nearest_haulable(world: &World, bx: i32, by: i32, radius: i32) -> Option
 ///   Berry/CookedBerry/Mushroom → home, or just wander toward it
 fn deliver_target(world: &World, idx: usize) -> Option<(i32, i32)> {
     let bot = &world.bots[idx];
+    let carry = bot.carrying;
+    if carry == Carry::None { return None; }
     let (bx, by) = (bot.x, bot.y);
-    match bot.carrying {
-        Carry::Log => find_nearest_tile(world, bx, by, Tile::Fire, 30)
-            .or_else(|| bot.home),
-        Carry::Stone => bot
-            .home
-            .or_else(|| find_nearest_tile(world, bx, by, Tile::Home, 30)),
-        // A cook carrying a raw berry wants a fire, not a home. Without this
-        // branch, cooks walk the berry to their house and set it down without
-        // ever cooking — the whole chain is gated on this routing decision.
-        // Mirror the Log case: head toward the nearest fire and let
-        // pathfinding stop on an adjacent walkable tile.
-        Carry::Berry if bot.job == Job::Cook => find_nearest_tile(world, bx, by, Tile::Fire, 30)
-            .or_else(|| bot.home),
-        // Raw fish MUST be cooked before eating — always route to fire.
-        // Without this, bots carry inedible fish home and drop it uselessly.
-        Carry::Fish => find_nearest_tile(world, bx, by, Tile::Fire, 30)
-            .or_else(|| bot.home),
-        Carry::Berry | Carry::CookedBerry | Carry::CookedFish | Carry::Mushroom => bot
-            .home
-            .or_else(|| find_nearest_tile(world, bx, by, Tile::Home, 20)),
-        Carry::None => None,
+
+    // Routing is property-driven:
+    //   wants_fire() items (Log, Fish) always go to fire — fuel or cooking.
+    //   Cookable items from a Cook also route to fire — the cook workflow
+    //   is pick-up → walk to fire → cook in hand → deliver cooked product.
+    //   Stone goes home (shrine-building material).
+    //   Everything else (cooked food, mushrooms, non-cook berries) → home.
+    let route_to_fire = carry.wants_fire()
+        || (carry.is_cookable() && bot.job == Job::Cook);
+
+    if carry == Carry::Stone {
+        bot.home
+            .or_else(|| find_nearest_tile(world, bx, by, Tile::Home, 30))
+    } else if route_to_fire {
+        find_nearest_tile(world, bx, by, Tile::Fire, 30)
+            .or_else(|| bot.home)
+    } else {
+        bot.home
+            .or_else(|| find_nearest_tile(world, bx, by, Tile::Home, 20))
     }
 }
 
@@ -2116,14 +1990,7 @@ fn find_grass_near_water(world: &World, bx: i32, by: i32, radius: i32) -> Option
             if world.tile(x, y) != Tile::Grass {
                 continue;
             }
-            let mut near_water = false;
-            for (ax, ay) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
-                if matches!(world.tile(x + ax, y + ay), Tile::Water | Tile::Puddle) {
-                    near_water = true;
-                    break;
-                }
-            }
-            if near_water {
+            if world.has_adjacent(x, y, |t| t.is_drinkable()) {
                 let d = dx.abs() + dy.abs();
                 if best.as_ref().map_or(true, |(bd, _)| d < *bd) {
                     best = Some((d, (x, y)));
@@ -2248,13 +2115,13 @@ fn step_toward_target(world: &mut World, idx: usize) {
         let mut blocker: Option<(i32, i32, Tile)> = None;
         if ddx != 0 {
             let t = world.tile(bx + ddx, by);
-            if matches!(t, Tile::Tree | Tile::Rock) {
+            if t.is_clearable() {
                 blocker = Some((bx + ddx, by, t));
             }
         }
         if blocker.is_none() && ddy != 0 {
             let t = world.tile(bx, by + ddy);
-            if matches!(t, Tile::Tree | Tile::Rock) {
+            if t.is_clearable() {
                 blocker = Some((bx, by + ddy, t));
             }
         }
@@ -2262,7 +2129,7 @@ fn step_toward_target(world: &mut World, idx: usize) {
         // but the real obstacle is at a slight angle.
         if blocker.is_none() && ddx != 0 && ddy != 0 {
             let t = world.tile(bx + ddx, by + ddy);
-            if matches!(t, Tile::Tree | Tile::Rock) {
+            if t.is_clearable() {
                 blocker = Some((bx + ddx, by + ddy, t));
             }
         }
@@ -2357,21 +2224,12 @@ fn step_toward_target(world: &mut World, idx: usize) {
                 let energy_cost = if has_tool { 0.08 } else { 0.15 };
                 world.bots[idx].energy = (world.bots[idx].energy - energy_cost).max(0.0);
 
-                // Clearing thresholds by material:
-                let threshold: u16 = match otile {
-                    Tile::Tree => 60,  // lighter — wood yields to hands
-                    Tile::Rock => 200, // heavy — stone is stubborn
-                    _ => 999,
-                };
+                // Clearing threshold from the tile's own properties:
+                let threshold = otile.clear_effort().unwrap_or(999);
 
                 if world.bots[idx].clear_progress >= threshold {
-                    // Cleared! Transform the obstacle.
-                    let result_tile = match otile {
-                        Tile::Tree => Tile::Log,
-                        Tile::Rock => Tile::Stone,
-                        _ => Tile::Grass,
-                    };
-                    world.set_tile(ox, oy, result_tile);
+                    // Cleared! Transform the obstacle into its product.
+                    world.set_tile(ox, oy, otile.cleared_into());
 
                     // Tool use consumes durability.
                     if has_tool {
@@ -2789,15 +2647,9 @@ fn emergency_drop_cargo(world: &mut World, idx: usize) {
         return;
     }
 
-    let drop_tile = match carry {
-        Carry::Berry => Tile::Berry,
-        Carry::Log => Tile::Log,
-        Carry::Stone => Tile::Stone,
-        Carry::CookedBerry => Tile::CookedBerry,
-        Carry::Mushroom => Tile::Mushroom,
-        Carry::Fish => Tile::Fish,
-        Carry::CookedFish => Tile::CookedFish,
-        Carry::None => return,
+    let drop_tile = match carry.to_tile() {
+        Some(t) => t,
+        None => return,
     };
     // Set it down on a nearby walkable tile.
     for (dx, dy) in [(1, 0), (-1, 0), (0, 1), (0, -1)] {
