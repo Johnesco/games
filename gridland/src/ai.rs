@@ -1,5 +1,5 @@
 use crate::bot::{Bot, Carry, Goal, Job, MemKind};
-use crate::world::{Tile, Weather, World, H, W, FIRE_LOG_FUEL};
+use crate::world::{Tile, Weather, World, H, W, FIRE_INITIAL_FUEL, FIRE_LOG_FUEL};
 
 /// Radius within which a bot perceives tiles and other bots.
 const SIGHT: i32 = 5;
@@ -34,6 +34,10 @@ pub fn think_and_act(world: &mut World, idx: usize, snap: &[(i32, i32, bool, u32
     // Cooks upgrade berries at fires.
     try_cook_nearby(world, idx);
 
+    // Any bot can make a fire when desperate — cold, dark, struggling.
+    // Skilled fire-makers (cooks) produce fires that last much longer.
+    try_make_fire(world, idx);
+
     // Fishermen catch fish at water edges.
     try_fish(world, idx);
 
@@ -64,7 +68,12 @@ pub fn think_and_act(world: &mut World, idx: usize, snap: &[(i32, i32, bool, u32
             bot.goal = new_goal;
             bot.goal_ticks = 0;
             bot.target = None;
-            bot.commitment_delay = 500; // ~4s of contemplation at 2× speed — bubble shows before action
+            // Shorter commitment delay when switching to an urgent task-in-progress
+            // like cooking. Carrying a cookable item means the bot is mid-chain —
+            // the full 4s contemplation stalls the cooking pipeline.
+            let carrying_cookable = matches!(bot.carrying, Carry::Berry | Carry::Fish);
+            let urgent_task = carrying_cookable && matches!(new_goal, Goal::Cook | Goal::Deliver);
+            bot.commitment_delay = if urgent_task { 80 } else { 500 };
             bot.announce_now(line);
         } else {
             bot.goal_ticks = bot.goal_ticks.saturating_add(1);
@@ -1090,6 +1099,133 @@ fn try_cook_nearby(world: &mut World, idx: usize) {
     }
 }
 
+/// Universal fire-making. Any bot can light a fire when desperate enough —
+/// cold and shivering, lost at night, or just plain stressed. The fire
+/// consumes the tile the bot is standing on (Grass/Sand/Path → Fire).
+///
+/// Skill matters: a Cook's fire is well-built and lasts the full
+/// FIRE_INITIAL_FUEL duration. A non-cook's campfire is scrappy — roughly
+/// 35-60% of full fuel depending on industriousness. Carrying a Log and
+/// burning it adds a big fuel bonus on top.
+///
+/// Guards against fire spam:
+///   - no existing fire within 5 tiles (don't cluster)
+///   - probability gate (~2% per eligible tick for non-cooks, ~5% for cooks)
+///   - only triggers when warmth is genuinely low
+fn try_make_fire(world: &mut World, idx: usize) {
+    let (bx, by) = (world.bots[idx].x, world.bots[idx].y);
+    let here = world.tile(bx, by);
+    let warmth = world.bots[idx].warmth;
+    let stress = world.bots[idx].stress;
+    let is_cook = world.bots[idx].job == Job::Cook;
+    let ind = world.bots[idx].traits.industriousness;
+    let is_night = world.is_night();
+
+    // Desperation check — cold is the primary driver, stress amplifies it.
+    // Night makes the threshold more lenient (people light fires at dusk).
+    let cold_threshold = if is_night { 45.0 } else { 28.0 };
+    let desperate = warmth < cold_threshold
+        || (warmth < 50.0 && stress > 55.0);
+    if !desperate {
+        return;
+    }
+
+    // Must be on a suitable tile.
+    if !matches!(here, Tile::Grass | Tile::Sand | Tile::Path) {
+        return;
+    }
+
+    // Don't cluster fires — check for existing fire within 5 tiles.
+    let mut fire_nearby = false;
+    for dy in -5i32..=5 {
+        for dx in -5i32..=5 {
+            if matches!(world.tile(bx + dx, by + dy), Tile::Fire) {
+                fire_nearby = true;
+                break;
+            }
+        }
+        if fire_nearby { break; }
+    }
+    if fire_nearby {
+        return;
+    }
+
+    // Probability gate — small chance per tick so fires emerge naturally,
+    // not instantly the moment warmth drops.
+    let chance: f32 = if is_cook { 0.05 } else { 0.015 + ind * 0.01 };
+    if !world.rng.chance(chance) {
+        return;
+    }
+
+    // --- Fire is lit! ---
+    // Fuel: cooks build a proper fire; everyone else is improvising.
+    let base_fuel = if is_cook {
+        FIRE_INITIAL_FUEL
+    } else {
+        // 35-60% of full, scaled by industriousness (handy folk build better)
+        let frac = 0.35 + ind * 0.25;
+        (FIRE_INITIAL_FUEL as f32 * frac) as u16
+    };
+
+    // Burning a carried Log adds a big fuel bonus.
+    let has_log = world.bots[idx].carrying == Carry::Log;
+    let fuel = if has_log {
+        world.bots[idx].carrying = Carry::None;
+        world.bots[idx].carry_ticks = 0;
+        base_fuel.saturating_add(FIRE_LOG_FUEL)
+    } else {
+        base_fuel
+    };
+
+    world.set_fire(bx, by, fuel);
+
+    // Remember this fire.
+    let tick = world.tick;
+    world.bots[idx].remember(MemKind::Fire, bx, by, tick);
+
+    // Mood & warmth bump from the accomplishment.
+    world.bots[idx].mood = (world.bots[idx].mood + 8.0).min(100.0);
+    world.bots[idx].warmth = (world.bots[idx].warmth + 10.0).min(100.0);
+    world.bots[idx].stress = (world.bots[idx].stress - 6.0).max(0.0);
+    world.bots[idx].reputation = (world.bots[idx].reputation + 2).min(200);
+
+    let name = world.bots[idx].name.clone();
+    let seed = (world.tick as u32).wrapping_add(world.bots[idx].id);
+    if is_cook {
+        world.log(format!("{} built a sturdy campfire", name));
+        world.bots[idx].announce(pick(
+            &[
+                "A proper fire. This one will last.",
+                "Good kindling, steady flame. Let it burn.",
+                "Everyone come warm yourselves.",
+                "Built right, from the ground up.",
+            ],
+            seed,
+        ));
+    } else if has_log {
+        world.log(format!("{} fed a log to a new fire", name));
+        world.bots[idx].announce(pick(
+            &[
+                "That log caught. Thank the stars.",
+                "Fire at last. My hands were numb.",
+                "We have light again.",
+            ],
+            seed,
+        ));
+    } else {
+        world.log(format!("{} lit a small campfire", name));
+        world.bots[idx].announce(pick(
+            &[
+                "Just some twigs and hope.",
+                "It's small, but it's warm.",
+                "I had to try. Too cold to wait.",
+                "Finally — a little heat.",
+            ],
+            seed,
+        ));
+    }
+}
+
 /// Stressed bots gravitate to Shrines and Fires. Standing on one shaves
 /// stress steadily; adjacency gives a milder effect (already handled in
 /// drain_drives). This function makes sure the Shrine path-traffic bump
@@ -1602,15 +1738,31 @@ fn choose_goal(world: &World, idx: usize, snap: &[(i32, i32, bool, u32)]) -> Goa
     // Cook score — anyone carrying a cookable item (Fish MUST be cooked) wants
     // a fire. Cooks get the highest pull; Fish carriers get urgency because raw
     // fish is inedible and spoils their inventory.
+    //
+    // CRITICAL: Cook-job bots carrying a cookable item must score ABOVE
+    // deliver_score (max 1.8) to prevent the goal from flipping to Deliver
+    // with its 500-tick commitment delay. The Cook workflow is: walk to berry
+    // → pick up → walk to fire → cook in hand → carry cooked item home.
+    // If the goal flips mid-journey the bot wastes 1000+ ticks on commitment
+    // delays before it ever reaches a fire.
     let carrying_cookable = matches!(bot.carrying, Carry::Berry | Carry::Fish);
     let carrying_fish = bot.carrying == Carry::Fish;
-    let cook_score = if j == Job::Cook && has_fire && (has_food || carrying_cookable) {
+    let cook_score = if j == Job::Cook && carrying_cookable {
+        // Cook carrying an item that needs a fire — override deliver.
+        // This score (2.0+) always beats deliver_score (max 1.8).
+        // No fire-memory requirement: pick_target for Goal::Cook uses
+        // find_nearest_tile(Fire, 30) as fallback, so the bot will walk
+        // toward a fire even if it hasn't seen one yet.
+        2.0 + bot.traits.industriousness * 0.15
+    } else if j == Job::Cook && (has_food || has_fire) {
+        // Cook not carrying yet — go find food to cook, or warm by a fire
         0.95 + bot.traits.industriousness * 0.25
-    } else if carrying_fish && has_fire {
-        // Fish is inedible raw — strong pull to fire
-        0.85 + h * 0.3
-    } else if carrying_cookable && has_fire && h > 0.4 {
-        // Hungry non-cook with a berry near a fire
+    } else if carrying_fish {
+        // Fish is inedible raw — strong pull to fire for ANY job.
+        // No fire-memory requirement: target selection will find one.
+        1.85 + h * 0.2
+    } else if carrying_cookable && has_fire && h > 0.3 {
+        // Hungry non-cook with a berry near a known fire
         0.55 + h * 0.3
     } else {
         0.0
@@ -1907,7 +2059,11 @@ fn deliver_target(world: &World, idx: usize) -> Option<(i32, i32)> {
         // pathfinding stop on an adjacent walkable tile.
         Carry::Berry if bot.job == Job::Cook => find_nearest_tile(world, bx, by, Tile::Fire, 30)
             .or_else(|| bot.home),
-        Carry::Berry | Carry::CookedBerry | Carry::CookedFish | Carry::Mushroom | Carry::Fish => bot
+        // Raw fish MUST be cooked before eating — always route to fire.
+        // Without this, bots carry inedible fish home and drop it uselessly.
+        Carry::Fish => find_nearest_tile(world, bx, by, Tile::Fire, 30)
+            .or_else(|| bot.home),
+        Carry::Berry | Carry::CookedBerry | Carry::CookedFish | Carry::Mushroom => bot
             .home
             .or_else(|| find_nearest_tile(world, bx, by, Tile::Home, 20)),
         Carry::None => None,

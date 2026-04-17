@@ -276,6 +276,15 @@ impl World {
         self.bots.iter().position(|b| b.x == x && b.y == y && b.alive)
     }
 
+    /// Place a fire with a specific fuel amount. Use this instead of
+    /// `set_tile(Fire)` when the fire should burn longer or shorter than
+    /// FIRE_INITIAL_FUEL — e.g. a novice's campfire vs a Cook's well-built one.
+    pub fn set_fire(&mut self, x: i32, y: i32, fuel: u16) {
+        self.set_tile(x, y, Tile::Fire);
+        // Override the default fuel that set_tile inserted.
+        self.fire_fuel.insert((x, y), fuel);
+    }
+
     /// Record a footstep on this tile — used to wear grass into a Path.
     pub fn mark_step(&mut self, x: i32, y: i32) {
         if x < 0 || y < 0 || x >= W as i32 || y >= H as i32 {
