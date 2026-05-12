@@ -1,0 +1,10 @@
+{
+  "name": "snake",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Classic Snake built with KAPLAY 4 — grid-based, scene transitions, arrow/WASD controls.",
+  "dependencies": {
+    "kaplay": "^4000.0.0-alpha.27"
+  }
+}
