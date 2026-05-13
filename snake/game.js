@@ -10,7 +10,7 @@ const k = kaplay({
 const CELL = 40;
 const COLS = 20;
 const ROWS = 15;
-const TICK = 0.12;
+const TICK = 0.22;
 
 const sameCell = (a, b) => a.x === b.x && a.y === b.y;
 
