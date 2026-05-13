@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Games — John Escobedo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 3rem 2rem 4rem;
+  }
+
+  header {
+    margin-bottom: 2.5rem;
+  }
+  header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f0f6fc;
+    letter-spacing: -0.02em;
+  }
+  header p {
+    color: #8b949e;
+    margin-top: 0.4rem;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  header a {
+    color: #8b949e;
+    text-decoration: none;
+    border-bottom: 1px dotted #8b949e;
+  }
+  header a:hover { color: #c9d1d9; border-bottom-color: #c9d1d9; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    background: #161b22;
+    border: 1px solid #21262d;
+    border-radius: 8px;
+    padding: 1.25rem 1.4rem;
+    transition: border-color 0.2s, transform 0.15s;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+  }
+  .card:hover {
+    border-color: #388bfd;
+    transform: translateY(-2px);
+  }
+
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin-bottom: 0.35rem;
+  }
+
+  .card-desc {
+    color: #8b949e;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+  }
+
+  .tag {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 99px;
+    background: #21262d;
+    color: #8b949e;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>Games</h1>
+    <p>Small browser games and interactive experiments. <a href="https://johnesco.github.io/">← back to portfolio</a></p>
+  </header>
+
+  <div class="grid">
+
+    <a class="card" href="snake/">
+      <div class="card-title">Snake</div>
+      <div class="card-desc">Classic Snake on a 20×15 grid. Arrow keys or WASD; collect food, don't eat yourself.</div>
+      <div class="card-tags">
+        <span class="tag">KAPLAY 4</span>
+        <span class="tag">Arcade</span>
+      </div>
+    </a>
+
+    <a class="card" href="blackout/">
+      <div class="card-title">Blackout Poetry</div>
+      <div class="card-desc">Compose found poems by blacking out words on a page of text. Multiple iterations of the concept.</div>
+      <div class="card-tags">
+        <span class="tag">Creative</span>
+      </div>
+    </a>
+
+    <a class="card" href="carrace/">
+      <div class="card-title">Car Physics</div>
+      <div class="card-desc">A small driving-physics sandbox.</div>
+      <div class="card-tags">
+        <span class="tag">Sandbox</span>
+      </div>
+    </a>
+
+    <a class="card" href="farm/">
+      <div class="card-title">A Farmer's Heart</div>
+      <div class="card-desc">Branching interactive story about life on a small farm. Custom JSON-driven engine.</div>
+      <div class="card-tags">
+        <span class="tag">Story</span>
+      </div>
+    </a>
+
+    <a class="card" href="farmink/">
+      <div class="card-title">Farmer's Heart (Ink)</div>
+      <div class="card-desc">The same story re-implemented in Inkle's Ink scripting language.</div>
+      <div class="card-tags">
+        <span class="tag">Story</span>
+        <span class="tag">Ink</span>
+      </div>
+    </a>
+
+    <a class="card" href="gridland/www/">
+      <div class="card-title">Gridland</div>
+      <div class="card-desc">A tiny watchable world. Villagers tile, harvest, cook, and carry on without you. Rust + Wasm.</div>
+      <div class="card-tags">
+        <span class="tag">Simulation</span>
+        <span class="tag">Rust</span>
+      </div>
+    </a>
+
+    <a class="card" href="resumegame/">
+      <div class="card-title">The Great Career Quest</div>
+      <div class="card-desc">A resume disguised as an interactive fiction adventure. Inform 7.</div>
+      <div class="card-tags">
+        <span class="tag">IF</span>
+        <span class="tag">Inform 7</span>
+      </div>
+    </a>
+
+  </div>
+
+</div>
+</body>
+</html>
