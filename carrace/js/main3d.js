@@ -1,13 +1,15 @@
 // Main entry — ES module
-// cannon-es physics world, Three.js renderer, game loop, chase camera
+// Three.js renderer, kinematic car, game loop, chase camera
 
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import { initInput, getInput } from './input.js';
 import { createEnvironment } from './environment.js';
-import { createCar, getChassisBody, getSpeedMPH, setDrivingPreset } from './car3d.js';
+import { createCar, getChassisBody, getSpeedMPH, getTopSpeed, setDrivingPreset } from './car3d.js';
 import { createTrack } from './track.js';
 import { initRace, updateRace, syncAllRaceCars, restartRace, recoverPlayerCar, getRaceHUD } from './race.js';
+import { initAudio, updateAudio, playImpact, suspendAudio, resumeAudio, isDriftingCheck } from './audio.js';
+import { createParticleSystem, emitSmoke, updateParticles } from './particles.js';
 
 // ── Three.js setup ───────────────────────────────────────────────────
 const scene = new THREE.Scene();
@@ -31,11 +33,9 @@ window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// ── cannon-es physics world ──────────────────────────────────────────
+// ── cannon-es world (environment + track visuals only, not used for car) ─
 const world = new CANNON.World();
 world.gravity.set(0, -9.82, 0);
-world.broadphase = new CANNON.SAPBroadphase(world);
-world.defaultContactMaterial.friction = 0.3;
 
 // ── Build scene ──────────────────────────────────────────────────────
 const env = createEnvironment(scene, world);
@@ -46,15 +46,37 @@ initInput();
 // ── Initialize race (positions all cars on grid) ─────────────────────
 initRace(playerCar, scene, world);
 
+// ── Particles ────────────────────────────────────────────────────────
+createParticleSystem(scene, camera);
+
+// ── Audio init on first user gesture ─────────────────────────────────
+let audioStarted = false;
+function tryInitAudio() {
+    if (audioStarted) return;
+    audioStarted = true;
+    initAudio();
+}
+document.addEventListener('keydown', tryInitAudio, { once: false });
+document.addEventListener('click', tryInitAudio, { once: false });
+
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) suspendAudio();
+    else resumeAudio();
+});
+
+// (Collision sound removed — car is kinematic, no physics collisions)
+
 // ── Chase camera state ───────────────────────────────────────────────
 const camPos = new THREE.Vector3(0, 5, -12);
 const camLookAt = new THREE.Vector3();
+let shakeIntensity = 0;
 
 const CAM_DISTANCE = 12;
 const CAM_HEIGHT = 4;
 const CAM_LOOK_AHEAD = 10;
 const CAM_POS_SMOOTH = 0.06;
 const CAM_LOOK_SMOOTH = 0.10;
+const BASE_FOV = 75;
 
 // ── HUD elements ─────────────────────────────────────────────────────
 const speedEl = document.getElementById('speed');
@@ -90,20 +112,29 @@ function animate() {
         input.reset = false;
     }
 
-    // Race update handles controls + AI (BEFORE physics step)
+    // Race update: moves player (kinematic) + AI (spline-following)
     updateRace(dt, input);
 
-    // Physics step (fixed 1/60 s, up to 3 sub-steps)
-    world.step(1 / 60, dt, 3);
-
-    // Sync ALL car visuals (player + AI) — AFTER physics step
+    // Sync all car visuals (player + AI)
     syncAllRaceCars();
 
+    // Drift detection + audio + particles
+    const chassis = getChassisBody();
+    const drifting = isDriftingCheck(chassis);
+    const speed = chassis ? chassis.velocity.length() : 0;
+    updateAudio(speed, getTopSpeed(), drifting);
+
+    if (drifting && playerCar.wheelMeshes) {
+        for (let wi = 2; wi <= 3; wi++) {
+            emitSmoke(playerCar.wheelMeshes[wi].position, Math.min(speed / 30, 1));
+        }
+    }
+    updateParticles(dt);
+
     // Camera
-    updateCamera();
+    updateCamera(dt);
 
     // Move shadow camera to follow car
-    const chassis = getChassisBody();
     if (chassis && env.dirLight) {
         env.dirLight.target.position.copy(chassis.position);
         env.dirLight.target.updateMatrixWorld();
@@ -120,7 +151,7 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-function updateCamera() {
+function updateCamera(dt) {
     const chassis = getChassisBody();
     if (!chassis) return;
 
@@ -149,6 +180,9 @@ function updateCamera() {
         pos.z - forward.z * dist,
     );
 
+    // Ground clamp — don't go below road surface
+    if (targetPos.y < pos.y + 2) targetPos.y = pos.y + 2;
+
     // Target look-at: ahead of car
     const lookAhead = CAM_LOOK_AHEAD + speedRatio * 6;
     const targetLook = new THREE.Vector3(
@@ -162,7 +196,21 @@ function updateCamera() {
     camLookAt.lerp(targetLook, CAM_LOOK_SMOOTH);
 
     camera.position.copy(camPos);
+
+    // Collision shake
+    if (shakeIntensity > 0.01) {
+        camera.position.x += (Math.random() - 0.5) * shakeIntensity;
+        camera.position.y += (Math.random() - 0.5) * shakeIntensity * 0.5;
+        camera.position.z += (Math.random() - 0.5) * shakeIntensity;
+        shakeIntensity *= 0.85;
+    }
+
     camera.lookAt(camLookAt);
+
+    // Speed FOV effect
+    const targetFOV = BASE_FOV + speedRatio * 10;
+    camera.fov = THREE.MathUtils.lerp(camera.fov, targetFOV, 0.03);
+    camera.updateProjectionMatrix();
 }
 
 function updateRaceHUD() {

@@ -1,6 +1,6 @@
 // Track — ES module
 // Diverse closed-loop circuit with banked turns, hills, guard rails,
-// CANNON.Trimesh road physics, CANNON.Box rail physics, procedural asphalt texture.
+// CANNON.Heightfield road physics, CANNON.Box rail physics, procedural asphalt texture.
 
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
@@ -19,12 +19,20 @@ const RAIL_HEIGHT    = 1.2;       // metres
 const RAIL_THICKNESS = 0.5;
 const RAIL_INTERVAL  = 2;         // physics box every Nth sample
 
+// ── Ground material (exported for contact material setup) ─────────────
+export const groundMaterial = new CANNON.Material('ground');
+
 // ── Module state ───────────────────────────────────────────────────────
 let trackCurve = null;
 let trackMesh  = null;
 let trackBody  = null;
 let startPos   = null;
 let startQuat  = null;
+
+// ── Heightfield data (for getTerrainInfo export) ────────────────────
+let hfGrid = null;
+let hfMeta = null;
+const _terrainNormal = new THREE.Vector3(0, 1, 0);
 
 // ═══════════════════════════════════════════════════════════════════════
 // Public API
@@ -37,18 +45,10 @@ export function createTrack(scene, world) {
     const bankAngles = computeBankingArray(trackCurve, N_SAMPLES);
     const smoothed   = smoothArray(bankAngles, SMOOTH_RADIUS);
 
-    // ── Coarse banking (physics — large flat quads, no jitter) ───────
-    const bankPhys    = computeBankingArray(trackCurve, N_PHYSICS);
-    const smoothPhys  = smoothArray(bankPhys, PHYS_SMOOTH);
-
     const visual = buildTrackGeometry(trackCurve, smoothed, N_SAMPLES);
-    const phys   = buildTrackGeometry(trackCurve, smoothPhys, N_PHYSICS);
 
-    // ── Road physics trimesh (coarse — ~18 m quads) ──────────────────
-    const trimesh = new CANNON.Trimesh(phys.positions, phys.indices);
-    trackBody = new CANNON.Body({ mass: 0 });
-    trackBody.addShape(trimesh);
-    world.addBody(trackBody);
+    // ── Road physics: HEIGHTFIELD (fast grid collision) ──────────────
+    buildTrackHeightfield(trackCurve, smoothed, world);
 
     // ── Road visual mesh (fine — detailed rendering) ─────────────────
     const geo = new THREE.BufferGeometry();
@@ -234,6 +234,98 @@ function buildTrackGeometry(curve, bankAngles, n) {
     }
 
     return { positions, uvs, indices, normals };
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Heightfield generation — fast grid-based ground collision
+// ═══════════════════════════════════════════════════════════════════════
+
+function buildTrackHeightfield(curve, bankAngles, world) {
+    // Heightfield covers a generous area around the track
+    const ELEM   = 2;      // metres per grid cell
+    const HALF_X = 200;    // ±200 m in X
+    const HALF_Z = 120;    // ±120 m in Z
+    const NX     = Math.floor(HALF_X * 2 / ELEM) + 1;  // 201
+    const NZ     = Math.floor(HALF_Z * 2 / ELEM) + 1;  // 121
+
+    // Pre-sample the curve (position, right vector, banking)
+    const NS = 400;
+    const samples = [];
+    for (let k = 0; k < NS; k++) {
+        const t = k / NS;
+        const p = curve.getPointAt(t);
+        const { R } = getFrame(curve, t);
+        const bIdx = Math.floor(t * bankAngles.length) % bankAngles.length;
+        samples.push({ x: p.x, y: p.y, z: p.z, rx: R.x, rz: R.z, bank: bankAngles[bIdx] });
+    }
+
+    // Build height matrix: data[i][j], i = X axis, j = Z axis (after rotation)
+    const data = [];
+    for (let i = 0; i < NX; i++) {
+        const row = [];
+        const wx = -HALF_X + i * ELEM;
+        for (let j = 0; j < NZ; j++) {
+            const wz = HALF_Z - j * ELEM;  // j increases → Z decreases (rotation convention)
+            row.push(sampleHeight(wx, wz, samples));
+        }
+        data.push(row);
+    }
+
+    // Store for terrain queries (used by getTerrainInfo)
+    hfGrid = data;
+    hfMeta = { ELEM, HALF_X, HALF_Z, NX, NZ };
+
+    const hfShape = new CANNON.Heightfield(data, { elementSize: ELEM });
+    trackBody = new CANNON.Body({ mass: 0, material: groundMaterial });
+    trackBody.addShape(hfShape);
+    trackBody.position.set(-HALF_X, 0, HALF_Z);
+    trackBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0);
+    world.addBody(trackBody);
+}
+
+function sampleHeight(wx, wz, samples) {
+    // Find closest curve sample
+    let bestD2 = Infinity, bestIdx = 0;
+    for (let k = 0; k < samples.length; k++) {
+        const dx = samples[k].x - wx;
+        const dz = samples[k].z - wz;
+        const d2 = dx * dx + dz * dz;
+        if (d2 < bestD2) { bestD2 = d2; bestIdx = k; }
+    }
+
+    const s = samples[bestIdx];
+    const dist = Math.sqrt(bestD2);
+
+    // Lateral offset from centerline (projected onto right vector)
+    const dx = wx - s.x;
+    const dz = wz - s.z;
+    const lateral = dx * s.rx + dz * s.rz;
+
+    let h;
+    const hw = HALF_WIDTH;
+    if (Math.abs(lateral) <= hw) {
+        // On track: centerline height + banking
+        h = s.y + lateral * Math.sin(s.bank);
+    } else if (Math.abs(lateral) <= hw + 6) {
+        // Shoulder: fade banking to flat centerline height
+        const edgeH = s.y + Math.sign(lateral) * hw * Math.sin(s.bank);
+        const t = (Math.abs(lateral) - hw) / 6;
+        const ss = t * t * (3 - 2 * t);  // smoothstep
+        h = edgeH * (1 - ss) + s.y * ss;
+    } else {
+        // Off track: flat at centerline height
+        h = s.y;
+    }
+
+    // Far from any track: blend down to ground level (Y=0)
+    const fadeStart = hw + 15;
+    const fadeEnd   = hw + 50;
+    if (dist > fadeStart) {
+        const t = Math.min((dist - fadeStart) / (fadeEnd - fadeStart), 1);
+        h = h * (1 - t * t);
+    }
+
+    return Math.max(h, 0);
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -475,4 +567,56 @@ export function getGridPositions(count) {
     }
 
     return positions;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Terrain query — bilinear height + surface normal from heightfield
+// ═══════════════════════════════════════════════════════════════════════
+
+export function getTerrainInfo(wx, wz) {
+    if (!hfGrid || !hfMeta) {
+        _terrainNormal.set(0, 1, 0);
+        return { height: 0, normal: _terrainNormal };
+    }
+
+    const { ELEM, HALF_X, HALF_Z, NX, NZ } = hfMeta;
+
+    // World coords → grid coords
+    // wx = -HALF_X + i * ELEM  →  i = (wx + HALF_X) / ELEM
+    // wz = HALF_Z  - j * ELEM  →  j = (HALF_Z - wz) / ELEM
+    const fi = (wx + HALF_X) / ELEM;
+    const fj = (HALF_Z - wz) / ELEM;
+
+    // Clamp to grid bounds
+    const i0 = Math.max(0, Math.min(NX - 2, Math.floor(fi)));
+    const j0 = Math.max(0, Math.min(NZ - 2, Math.floor(fj)));
+    const i1 = i0 + 1;
+    const j1 = j0 + 1;
+
+    // Fractional position within cell
+    const fx = Math.max(0, Math.min(1, fi - i0));
+    const fz = Math.max(0, Math.min(1, fj - j0));
+
+    // Four corner heights
+    const h00 = hfGrid[i0][j0];
+    const h10 = hfGrid[i1][j0];
+    const h01 = hfGrid[i0][j1];
+    const h11 = hfGrid[i1][j1];
+
+    // Bilinear interpolation
+    const height = h00 * (1 - fx) * (1 - fz)
+                 + h10 * fx * (1 - fz)
+                 + h01 * (1 - fx) * fz
+                 + h11 * fx * fz;
+
+    // Surface normal via finite differences
+    // dh/dx: height change per metre in +X direction (i axis)
+    const dhdx = ((h10 - h00) * (1 - fz) + (h11 - h01) * fz) / ELEM;
+    // dh/dz: height change per metre in +Z direction (j axis is -Z, so negate)
+    const dhdz = -((h01 - h00) * (1 - fx) + (h11 - h10) * fx) / ELEM;
+
+    // Normal = (-dhdx, 1, -dhdz) normalized
+    _terrainNormal.set(-dhdx, 1, -dhdz).normalize();
+
+    return { height, normal: _terrainNormal };
 }

@@ -8,6 +8,7 @@ const keys = {
     right: false,
     recover: false,
     reset: false,
+    handbrake: false,
 };
 
 function handleKey(e, pressed) {
@@ -34,6 +35,11 @@ function handleKey(e, pressed) {
             break;
         case 'Space':
             keys.recover = pressed;
+            e.preventDefault();
+            break;
+        case 'ShiftLeft':
+        case 'ShiftRight':
+            keys.handbrake = pressed;
             e.preventDefault();
             break;
         case 'KeyR':

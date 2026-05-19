@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import { createCarInstance, applyCarControlsTo, syncCarVisualsFor, resetCarInstance } from './car3d.js';
+import { createCarInstance, applyCarControlsTo, syncCarVisualsFor, resetCarInstance, holdCar } from './car3d.js';
 import { getTrackCurve, getGridPositions } from './track.js';
 
 // ── AI constants ─────────────────────────────────────────────────────
@@ -70,7 +70,7 @@ export function initRace(playerCar, scene, world) {
     // Create AI cars
     const aiCars = [];
     for (let i = 0; i < 7; i++) {
-        const car = createCarInstance(scene, world, AI_COLORS[i]);
+        const car = createCarInstance(scene, world, AI_COLORS[i], (i % 3));
         aiCars.push({
             car,
             name: AI_NAMES[i],
@@ -131,19 +131,12 @@ export function updateRace(dt, playerInput) {
 
     switch (state) {
         case STATES.COUNTDOWN:
-            // Hold all cars with brakes
-            for (const r of racers) {
-                for (let i = 0; i < 4; i++) r.car.vehicle.setBrake(100, i);
-                r.car.vehicle.applyEngineForce(0, 2);
-                r.car.vehicle.applyEngineForce(0, 3);
-            }
+            // Hold all cars still
+            for (const r of racers) holdCar(r.car);
             countdown -= dt;
             if (countdown <= 0) {
                 state = STATES.RACING;
                 raceTime = 0;
-                for (const r of racers) {
-                    for (let i = 0; i < 4; i++) r.car.vehicle.setBrake(0, i);
-                }
             }
             break;
 
@@ -151,7 +144,7 @@ export function updateRace(dt, playerInput) {
             raceTime += dt;
 
             // Player: normal physics controls
-            applyCarControlsTo(playerRacer.car, playerInput);
+            applyCarControlsTo(playerRacer.car, playerInput, dt);
 
             // AI: advance along curve (no physics controls)
             for (const r of racers) {
@@ -188,7 +181,7 @@ export function updateRace(dt, playerInput) {
 
         case STATES.FINISHED:
             // Player can still drive
-            applyCarControlsTo(playerRacer.car, playerInput);
+            applyCarControlsTo(playerRacer.car, playerInput, dt);
 
             // AI: decelerate to stop
             for (const r of racers) {
