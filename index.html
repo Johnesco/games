@@ -58,6 +58,7 @@
     flex-direction: column;
     text-decoration: none;
     color: inherit;
+    min-height: 5.5rem;
   }
   .card:hover {
     border-color: #388bfd;
@@ -77,23 +78,6 @@
     line-height: 1.5;
     flex: 1;
   }
-
-  .card-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.75rem;
-  }
-
-  .tag {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 99px;
-    background: #21262d;
-    color: #8b949e;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-  }
 </style>
 </head>
 <body>
@@ -104,98 +88,64 @@
     <p>Small browser games and interactive experiments. <a href="https://johnesco.github.io/">← back to portfolio</a></p>
   </header>
 
-  <div class="grid">
-
-    <a class="card" href="https://johnesco.github.io/ca/">
-      <div class="card-title">Cellular Automata</div>
-      <div class="card-desc">Life-like, Elementary, Brian's Brain, Wireworld, and Cyclic automata. Marching squares and pixel render modes.</div>
-      <div class="card-tags">
-        <span class="tag">Simulation</span>
-        <span class="tag">Rust</span>
-        <span class="tag">WASM</span>
-      </div>
-    </a>
-
-    <a class="card" href="offroad/">
-      <div class="card-title">Offroad</div>
-      <div class="card-desc">Top-down racer on a procedural ribbon road. Accelerate, steer, stay off the grass.</div>
-      <div class="card-tags">
-        <span class="tag">KAPLAY 4</span>
-        <span class="tag">Racing</span>
-      </div>
-    </a>
-
-    <a class="card" href="snake/">
-      <div class="card-title">Snake</div>
-      <div class="card-desc">Classic Snake on a 20×15 grid. Arrow keys or WASD; collect food, don't eat yourself.</div>
-      <div class="card-tags">
-        <span class="tag">KAPLAY 4</span>
-        <span class="tag">Arcade</span>
-      </div>
-    </a>
-
-    <a class="card" href="blackout/">
-      <div class="card-title">Blackout Poetry</div>
-      <div class="card-desc">Compose found poems by blacking out words on a page of text. Multiple iterations of the concept.</div>
-      <div class="card-tags">
-        <span class="tag">Creative</span>
-      </div>
-    </a>
-
-    <a class="card" href="carrace/">
-      <div class="card-title">Car Physics</div>
-      <div class="card-desc">A small driving-physics sandbox.</div>
-      <div class="card-tags">
-        <span class="tag">Sandbox</span>
-      </div>
-    </a>
-
-    <a class="card" href="farm/">
-      <div class="card-title">A Farmer's Heart</div>
-      <div class="card-desc">Branching interactive story about life on a small farm. Custom JSON-driven engine.</div>
-      <div class="card-tags">
-        <span class="tag">Story</span>
-      </div>
-    </a>
-
-    <a class="card" href="farmink/">
-      <div class="card-title">Farmer's Heart (Ink)</div>
-      <div class="card-desc">The same story re-implemented in Inkle's Ink scripting language.</div>
-      <div class="card-tags">
-        <span class="tag">Story</span>
-        <span class="tag">Ink</span>
-      </div>
-    </a>
-
-    <a class="card" href="gridland/www/">
-      <div class="card-title">Gridland</div>
-      <div class="card-desc">A tiny watchable world. Villagers tile, harvest, cook, and carry on without you. Rust + Wasm.</div>
-      <div class="card-tags">
-        <span class="tag">Simulation</span>
-        <span class="tag">Rust</span>
-      </div>
-    </a>
-
-    <a class="card" href="resumegame/">
-      <div class="card-title">The Great Career Quest</div>
-      <div class="card-desc">A resume disguised as an interactive fiction adventure. Inform 7.</div>
-      <div class="card-tags">
-        <span class="tag">IF</span>
-        <span class="tag">Inform 7</span>
-      </div>
-    </a>
-
-    <a class="card" href="usagi/">
-      <div class="card-title">Usagi Games</div>
-      <div class="card-desc">Pixel-art games made with the Usagi engine. Lua, 320&times;180, PICO-8 palette.</div>
-      <div class="card-tags">
-        <span class="tag">Usagi</span>
-        <span class="tag">Lua</span>
-      </div>
-    </a>
-
-  </div>
+  <div class="grid" id="grid"></div>
 
 </div>
+
+<script>
+  // Index is structural only: it knows which folders are games.
+  // All info (title, description) lives inside each game's own index.html.
+  const GAMES = [
+    { slug: 'blackout' },
+    { slug: 'carrace' },
+    { slug: 'farm' },
+    { slug: 'farmink' },
+    { slug: 'gridland', href: 'gridland/www/' },
+    { slug: 'offroad' },
+    { slug: 'resumegame' },
+    { slug: 'snake' },
+    { slug: 'usagi' },
+    { slug: 'ca' },
+  ];
+
+  async function loadGame(game) {
+    const link = game.href ?? game.slug + '/';
+    try {
+      const res = await fetch(link + 'index.html');
+      if (!res.ok) throw new Error(res.status);
+      const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
+      return {
+        link,
+        title: doc.querySelector('title')?.textContent?.trim() || game.slug,
+        desc: doc.querySelector('meta[name="description"]')?.content?.trim() || '',
+      };
+    } catch {
+      return { link, title: game.slug, desc: '' };
+    }
+  }
+
+  function renderCard({ link, title, desc }) {
+    const a = document.createElement('a');
+    a.className = 'card';
+    a.href = link;
+
+    const t = document.createElement('div');
+    t.className = 'card-title';
+    t.textContent = title;
+
+    const d = document.createElement('div');
+    d.className = 'card-desc';
+    d.textContent = desc;
+
+    a.append(t, d);
+    return a;
+  }
+
+  (async () => {
+    const grid = document.getElementById('grid');
+    const cards = await Promise.all(GAMES.map(loadGame));
+    cards.forEach(c => grid.appendChild(renderCard(c)));
+  })();
+</script>
 </body>
 </html>
