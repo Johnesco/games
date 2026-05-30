@@ -3,7 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Games — John Escobedo</title>
+<title>John's Games</title>
+<meta property="og:type" content="website">
+<meta property="og:title" content="John's Games">
+<meta property="og:description" content="Small browser games and interactive experiments by John Escobedo.">
+<meta property="og:url" content="https://johnesco.github.io/games/">
+<meta property="og:image" content="https://johnesco.github.io/games/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="John's Games">
+<meta name="twitter:description" content="Small browser games and interactive experiments by John Escobedo.">
+<meta name="twitter:image" content="https://johnesco.github.io/games/og-image.png">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -20,8 +29,14 @@
     padding: 3rem 2rem 4rem;
   }
 
+  /* ── Header ── */
   header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
     margin-bottom: 2.5rem;
+    border-bottom: 1px solid #21262d;
+    padding-bottom: 1.5rem;
   }
   header h1 {
     font-size: 2rem;
@@ -29,54 +44,143 @@
     color: #f0f6fc;
     letter-spacing: -0.02em;
   }
-  header p {
+  .tagline {
     color: #8b949e;
     margin-top: 0.4rem;
     font-size: 0.95rem;
     line-height: 1.5;
   }
-  header a {
+  .header-nav a {
     color: #8b949e;
     text-decoration: none;
+    font-size: 0.85rem;
     border-bottom: 1px dotted #8b949e;
   }
-  header a:hover { color: #c9d1d9; border-bottom-color: #c9d1d9; }
+  .header-nav a:hover { color: #c9d1d9; border-bottom-color: #c9d1d9; }
 
+  /* ── Grid ── */
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: 1fr;
     gap: 1rem;
   }
 
+  /* ── Card ── */
   .card {
     background: #161b22;
     border: 1px solid #21262d;
     border-radius: 8px;
-    padding: 1.25rem 1.4rem;
+    overflow: hidden;
     transition: border-color 0.2s, transform 0.15s;
     display: flex;
     flex-direction: column;
     text-decoration: none;
     color: inherit;
-    min-height: 5.5rem;
   }
-  .card:hover {
-    border-color: #388bfd;
-    transform: translateY(-2px);
+
+  @media (hover: hover) {
+    .card:hover {
+      border-color: #388bfd;
+      transform: translateY(-2px);
+    }
+  }
+
+  .card-thumb {
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    position: relative;
+  }
+  .card-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .card-thumb-gen {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--c1), var(--c2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    user-select: none;
+  }
+
+  .card-body {
+    padding: 1rem 1.25rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
   }
 
   .card-title {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 600;
     color: #f0f6fc;
-    margin-bottom: 0.35rem;
+    margin-bottom: 0.3rem;
   }
 
   .card-desc {
     color: #8b949e;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     line-height: 1.5;
     flex: 1;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.6rem;
+  }
+  .tag {
+    display: inline-block;
+    padding: 0.12rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    background: #21262d;
+    color: #8b949e;
+    border: 1px solid #30363d;
+  }
+
+  /* ── Footer ── */
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #21262d;
+    text-align: center;
+  }
+  .footer-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .footer-credit {
+    color: #8b949e;
+    font-size: 0.8rem;
+  }
+  .footer-credit a {
+    color: #8b949e;
+    text-decoration: none;
+    border-bottom: 1px dotted #8b949e;
+  }
+  .footer-credit a:hover { color: #c9d1d9; border-bottom-color: #c9d1d9; }
+
+  /* ── Responsive ── */
+  @media (min-width: 600px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (min-width: 900px) {
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 599px) {
+    .container { padding: 1.5rem 1rem 3rem; }
+    header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    header h1 { font-size: 1.5rem; }
   }
 </style>
 </head>
@@ -84,28 +188,40 @@
 <div class="container">
 
   <header>
-    <h1>Games</h1>
-    <p>Small browser games and interactive experiments. <a href="https://johnesco.github.io/">← back to portfolio</a></p>
+    <div class="brand">
+      <h1>John's Games</h1>
+      <p class="tagline">Small browser games and interactive experiments.</p>
+    </div>
+    <nav class="header-nav">
+      <a href="https://johnesco.github.io/">Portfolio</a>
+    </nav>
   </header>
 
   <div class="grid" id="grid"></div>
 
+  <footer>
+    <div class="footer-content">
+      <a href="https://ko-fi.com/johnesco" target="_blank" rel="noopener">
+        <img src="https://storage.ko-fi.com/cdn/kofi2.png?v=6"
+             alt="Support me on Ko-fi" height="36" style="border:0;">
+      </a>
+      <div class="footer-credit">
+        Made by <a href="https://johnesco.github.io/">John Escobedo</a>
+      </div>
+    </div>
+  </footer>
+
 </div>
 
 <script>
-  // Index is structural only: it knows which folders are games.
-  // All info (title, description) lives inside each game's own index.html.
   const GAMES = [
-    { slug: 'blackout' },
-    { slug: 'carrace' },
-    { slug: 'farm' },
-    { slug: 'farmink' },
-    { slug: 'gridland', href: 'gridland/www/' },
-    { slug: 'offroad' },
-    { slug: 'resumegame' },
-    { slug: 'snake' },
-    { slug: 'usagi' },
-    { slug: 'ca' },
+    { slug: 'blackout',    title: 'Blackout Poetry',        desc: 'Compose found poems by blacking out words on a page of text. Multiple iterations of the concept.', tags: ['creative', 'puzzle'],     colors: ['#e8e4dd', '#5c534a'], icon: '✏️' },
+    { slug: 'farmink',     title: "Farmer's Heart (Ink)",   desc: "The same story re-implemented in Inkle's Ink scripting language.",                                 tags: ['story'],                  colors: ['#a18cd1', '#fbc2eb'], icon: '🖊️' },
+    { slug: 'gridland',    title: 'Gridland',               desc: 'A tiny watchable world. Villagers tile, harvest, cook, and carry on without you. Rust + Wasm.',   tags: ['simulation'],             colors: ['#11998e', '#38ef7d'], icon: '🌍', href: 'gridland/www/' },
+    { slug: 'offroad',     title: 'Offroad',                desc: 'Top-down racer on a procedural ribbon road. Accelerate, steer, stay off the grass.',              tags: ['racing', 'arcade'],       colors: ['#f2994a', '#f2c94c'], icon: '🚛' },
+    { slug: 'snake',       title: 'Snake',                  desc: "Classic Snake on a 20×15 grid. Arrow keys or WASD; collect food, don't eat yourself.",       tags: ['arcade'],                 colors: ['#56ab2f', '#a8e063'], icon: '🐍' },
+    { slug: 'usagi',       title: 'Usagi Games',            desc: 'Pixel-art games made with the Usagi engine. Lua, 320×180, PICO-8 palette.',                 tags: ['arcade', 'pixel'],        colors: ['#ff6b6b', '#ffa07a'], icon: '🐰' },
+    { slug: 'ca',          title: 'Cellular Automata',      desc: "Life-like, Elementary, Brian's Brain, Wireworld, and Cyclic automata. Marching squares and pixel render modes.", tags: ['simulation', 'toy'], colors: ['#00aa77', '#00d2ff'], icon: '🔬' },
   ];
 
   async function loadGame(game) {
@@ -114,38 +230,85 @@
       const res = await fetch(link + 'index.html');
       if (!res.ok) throw new Error(res.status);
       const doc = new DOMParser().parseFromString(await res.text(), 'text/html');
-      return {
-        link,
-        title: doc.querySelector('title')?.textContent?.trim() || game.slug,
-        desc: doc.querySelector('meta[name="description"]')?.content?.trim() || '',
-      };
+      const title = doc.querySelector('title')?.textContent?.trim();
+      const desc  = doc.querySelector('meta[name="description"]')?.content?.trim();
+      return { title: title || game.title, desc: desc || game.desc };
     } catch {
-      return { link, title: game.slug, desc: '' };
+      return { title: game.title, desc: game.desc };
     }
   }
 
-  function renderCard({ link, title, desc }) {
+  function renderCard(game, fetched) {
     const a = document.createElement('a');
     a.className = 'card';
-    a.href = link;
+    a.href = game.href ?? game.slug + '/';
+
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'card-thumb';
+
+    if (game.thumb) {
+      const img = document.createElement('img');
+      img.src = game.thumb;
+      img.alt = (fetched.title || game.slug) + ' screenshot';
+      img.loading = 'lazy';
+      thumbWrap.appendChild(img);
+    } else {
+      const gen = document.createElement('div');
+      gen.className = 'card-thumb-gen';
+      const [c1, c2] = game.colors || ['#21262d', '#30363d'];
+      gen.style.setProperty('--c1', c1);
+      gen.style.setProperty('--c2', c2);
+      gen.textContent = game.icon || '';
+      thumbWrap.appendChild(gen);
+    }
+
+    const body = document.createElement('div');
+    body.className = 'card-body';
 
     const t = document.createElement('div');
     t.className = 'card-title';
-    t.textContent = title;
+    t.textContent = fetched.title || game.slug;
 
     const d = document.createElement('div');
     d.className = 'card-desc';
-    d.textContent = desc;
+    d.textContent = fetched.desc || '';
 
-    a.append(t, d);
+    body.append(t, d);
+
+    if (game.tags && game.tags.length) {
+      const tagsDiv = document.createElement('div');
+      tagsDiv.className = 'card-tags';
+      game.tags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = 'tag';
+        span.textContent = tag;
+        tagsDiv.appendChild(span);
+      });
+      body.appendChild(tagsDiv);
+    }
+
+    a.append(thumbWrap, body);
     return a;
   }
 
   (async () => {
     const grid = document.getElementById('grid');
-    const cards = await Promise.all(GAMES.map(loadGame));
-    cards.forEach(c => grid.appendChild(renderCard(c)));
+    const results = await Promise.all(GAMES.map(async game => {
+      const fetched = await loadGame(game);
+      return renderCard(game, fetched);
+    }));
+    results.forEach(card => grid.appendChild(card));
   })();
+</script>
+
+<script src="https://storage.ko-fi.com/cdn/scripts/overlay-widget.js"></script>
+<script>
+  kofiWidgetOverlay.draw('johnesco', {
+    'type': 'floating-chat',
+    'floating-chat.donateButton.text': 'Support Me',
+    'floating-chat.donateButton.background-color': '#388bfd',
+    'floating-chat.donateButton.text-color': '#fff'
+  });
 </script>
 </body>
 </html>
