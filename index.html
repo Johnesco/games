@@ -6,12 +6,12 @@
 <title>John's Games</title>
 <meta property="og:type" content="website">
 <meta property="og:title" content="John's Games">
-<meta property="og:description" content="Incomplete and experimental browser games by John Escobedo — works in progress.">
+<meta property="og:description" content="Published games and experiments in progress by John Escobedo.">
 <meta property="og:url" content="https://johnesco.github.io/games/">
 <meta property="og:image" content="https://johnesco.github.io/games/og-image.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="John's Games">
-<meta name="twitter:description" content="Incomplete and experimental browser games by John Escobedo — works in progress.">
+<meta name="twitter:description" content="Published games and experiments in progress by John Escobedo.">
 <meta name="twitter:image" content="https://johnesco.github.io/games/og-image.png">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,6 +57,17 @@
     border-bottom: 1px dotted #8b949e;
   }
   .header-nav a:hover { color: #c9d1d9; border-bottom-color: #c9d1d9; }
+
+  /* ── Sections ── */
+  .section-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f0f6fc;
+    margin: 0 0 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid #21262d;
+  }
+  .section-title + .grid { margin-bottom: 2.5rem; }
 
   /* ── Grid ── */
   .grid {
@@ -190,14 +201,18 @@
   <header>
     <div class="brand">
       <h1>John's Games</h1>
-      <p class="tagline">Incomplete and experimental browser games — a public workbench of works in progress.</p>
+      <p class="tagline">Published games, plus a public workbench of experiments in progress.</p>
     </div>
     <nav class="header-nav">
       <a href="https://johnesco.github.io/">Portfolio</a>
     </nav>
   </header>
 
-  <div class="grid" id="grid"></div>
+  <h2 class="section-title">Published Games</h2>
+  <div class="grid" id="grid-published"></div>
+
+  <h2 class="section-title">Experiments in Progress</h2>
+  <div class="grid" id="grid-wip"></div>
 
   <footer>
     <div class="footer-content">
@@ -214,6 +229,13 @@
 </div>
 
 <script>
+  // Published — finished games hosted off-site (external cards skip the
+  // title/desc fetch and open in a new tab).
+  const PUBLISHED = [
+    { slug: 'pavement-pursuit', title: 'Pavement Pursuit', desc: 'Top-down racer on procedurally-generated roads. Checkpoint racing, upgrades, rivals, and ghost time-trials.', tags: ['racing', 'arcade', 'itch.io'], colors: ['#f2994a', '#f2c94c'], icon: '🏁', href: 'https://vibecodedgames.itch.io/pavement', external: true },
+  ];
+
+  // Experiments in progress — playable works-in-progress served from this repo.
   const GAMES = [
     { slug: 'blackout',    title: 'Blackout Poetry',        desc: 'Compose found poems by blacking out words on a page of text. Multiple iterations of the concept.', tags: ['creative', 'puzzle'],     colors: ['#e8e4dd', '#5c534a'], icon: '✏️' },
     { slug: 'farmink',     title: "Farmer's Heart (Ink)",   desc: "The same story re-implemented in Inkle's Ink scripting language.",                                 tags: ['story'],                  colors: ['#a18cd1', '#fbc2eb'], icon: '🖊️' },
@@ -224,6 +246,7 @@
   ];
 
   async function loadGame(game) {
+    if (game.external) return { title: game.title, desc: game.desc }; // off-site — no same-origin index.html to probe
     const link = game.href ?? game.slug + '/';
     try {
       const res = await fetch(link + 'index.html');
@@ -241,6 +264,7 @@
     const a = document.createElement('a');
     a.className = 'card';
     a.href = game.href ?? game.slug + '/';
+    if (game.external) { a.target = '_blank'; a.rel = 'noopener'; }
 
     const thumbWrap = document.createElement('div');
     thumbWrap.className = 'card-thumb';
@@ -291,12 +315,16 @@
   }
 
   (async () => {
-    const grid = document.getElementById('grid');
-    const results = await Promise.all(GAMES.map(async game => {
-      const fetched = await loadGame(game);
-      return renderCard(game, fetched);
-    }));
-    results.forEach(card => grid.appendChild(card));
+    const fill = async (gridId, list) => {
+      const grid = document.getElementById(gridId);
+      const results = await Promise.all(list.map(async game => {
+        const fetched = await loadGame(game);
+        return renderCard(game, fetched);
+      }));
+      results.forEach(card => grid.appendChild(card));
+    };
+    fill('grid-published', PUBLISHED);
+    fill('grid-wip', GAMES);
   })();
 </script>
 
