@@ -13,13 +13,9 @@ fn run(seed: u32, ticks: u32) -> Gridland {
 
 /// Same seed → same world. Everything visible in `stats()` and the event
 /// log must match, or replays, comparisons between builds and bug repros
-/// all stop meaning anything.
-///
-/// KNOWN FAILURE (found build 5): World::fire_fuel / tile_age are HashMaps
-/// and step_weather / step_decay walk their keys in std's per-instance random
-/// order (world.rs), so native runs drift. Un-ignore once keys are ordered.
+/// all stop meaning anything. (Found at build 5: HashMap iteration order
+/// made runs drift; sim state now uses BTreeMap — keep it that way.)
 #[test]
-#[ignore = "known bug: HashMap iteration order makes seeds non-deterministic"]
 fn same_seed_same_world() {
     for seed in [1, 42] {
         let a = run(seed, 8_000);

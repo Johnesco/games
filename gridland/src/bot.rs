@@ -1,6 +1,6 @@
 use crate::rng::Rng;
 use crate::world::Tile;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Goal {
@@ -290,7 +290,7 @@ pub struct Bot {
 
     pub memory: Vec<Memory>,
     pub home: Option<(i32, i32)>,
-    pub relationships: HashMap<u32, i32>, // bot id -> affinity
+    pub relationships: BTreeMap<u32, i32>, // bot id -> affinity
 
     pub goal: Goal,
     pub target: Option<(i32, i32)>,
@@ -434,7 +434,7 @@ impl Bot {
             color,
             memory: Vec::new(),
             home: None,
-            relationships: HashMap::new(),
+            relationships: BTreeMap::new(),
             goal: Goal::Idle,
             target: None,
             goal_ticks: 0,

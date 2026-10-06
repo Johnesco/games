@@ -1,6 +1,6 @@
 use crate::bot::Bot;
 use crate::rng::Rng;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub const W: usize = 64;
 pub const H: usize = 64;
@@ -234,14 +234,14 @@ pub struct World {
     pub path_wear: Vec<u8>,
     /// Fire-tile fuel clock. Each fire starts with a finite number of ticks;
     /// when it runs out the fire becomes Ash. Adding a Log resets/adds fuel.
-    pub fire_fuel: HashMap<(i32, i32), u16>,
+    pub fire_fuel: BTreeMap<(i32, i32), u16>,
     /// Per-tile age for decaying props (Ash, Grave, Puddle, Log on ground).
     /// Stored sparsely by position; absence = untracked / no decay.
-    pub tile_age: HashMap<(i32, i32), u16>,
+    pub tile_age: BTreeMap<(i32, i32), u16>,
     /// For cook jobs — per-tile "cooking progress". A berry sitting adjacent
     /// to a fire with a Cook standing by accumulates; at threshold it upgrades
     /// to CookedBerry.
-    pub cook_progress: HashMap<(i32, i32), u16>,
+    pub cook_progress: BTreeMap<(i32, i32), u16>,
 
     pub weather: Weather,
     pub weather_ticks: u32,
@@ -281,9 +281,9 @@ impl World {
             last_bubble_tick: 0,
             tree_complaints: Vec::new(),
             path_wear: vec![0u8; W * H],
-            fire_fuel: HashMap::new(),
-            tile_age: HashMap::new(),
-            cook_progress: HashMap::new(),
+            fire_fuel: BTreeMap::new(),
+            tile_age: BTreeMap::new(),
+            cook_progress: BTreeMap::new(),
             weather: Weather::Clear,
             weather_ticks: 0,
             day_length: 1200,
@@ -639,7 +639,10 @@ impl World {
                             break;
                         }
                     }
-                    if !path_adj {
+                    // Never mature under a standing bot — Tree isn't
+                    // walkable, so it would trap them. The tile just waits
+                    // for a later pass.
+                    if !path_adj && self.bot_at(x, y).is_none() {
                         self.tiles[i] = Tile::Tree as u8;
                     }
                 }
@@ -980,10 +983,8 @@ mod tests {
     use super::*;
 
     /// Every living bot stays inside the map, and on a walkable tile.
-    /// KNOWN FAILURE (found build 5): Forest matures into Tree under a
-    /// standing bot (step_environment), trapping it. Un-ignore once fixed.
+    /// (Found at build 5: Forest used to mature into Tree under a bot.)
     #[test]
-    #[ignore = "known bug: Forest->Tree under a standing bot"]
     fn bots_stay_in_bounds_and_on_walkable_tiles() {
         for seed in [1u64, 42, 777] {
             let mut w = World::new(seed);

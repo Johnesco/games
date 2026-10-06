@@ -34,8 +34,13 @@ Rust → WebAssembly village sim, served from `master` by GitHub Pages at
 **One build = one design change.** Small fixes ride along with the next one. Diary notes are written
 for someone watching the village, not as a code changelog. Put engineering detail in the commit message.
 
-## Known issues at build 5 (pinned by ignored tests)
+## Unreleased: in `www/`, ships with the next build
 
-- **Non-deterministic seeds:** `World::fire_fuel` / `tile_age` are `HashMap`s walked in std's random order
-  (`step_weather`, `step_decay`). Probe numbers vary a little run to run until this is fixed.
-- **Bots trapped in trees:** Forest matures into Tree under a standing bot (`step_environment`).
+Fixes ride along until a significant design change is ready to cut as build 6 (owner's call, 2026-10-06).
+When cutting, fold these into the diary notes.
+
+- **Seeds are deterministic.** All sim maps (`fire_fuel`, `tile_age`, `cook_progress`, `relationships`) are
+  `BTreeMap`s; std `HashMap` iteration order is random per instance and made runs drift. Don't reintroduce
+  `HashMap`/`HashSet` into sim state. `same_seed_same_world` guards this, and the probe is now byte-identical run to run.
+- **Bots no longer get trapped in trees.** Forest won't mature into Tree under a standing bot
+  (`step_environment`). `bots_stay_in_bounds_and_on_walkable_tiles` guards this.
