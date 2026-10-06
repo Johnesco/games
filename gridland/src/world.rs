@@ -245,9 +245,6 @@ pub struct World {
 
     pub weather: Weather,
     pub weather_ticks: u32,
-    /// Ticks per simulated day; used to colour-tint the world and shift
-    /// warmth drives. 1200 ≈ 10s at 2× speed.
-    pub day_length: u32,
 
     // --- Aggregate counters used by stats/telemetry ---
     pub graves_placed: u32,
@@ -286,7 +283,6 @@ impl World {
             cook_progress: BTreeMap::new(),
             weather: Weather::Clear,
             weather_ticks: 0,
-            day_length: 1200,
             graves_placed: 0,
             logs_chopped_total: 0,
             berries_cooked_total: 0,
@@ -841,15 +837,18 @@ impl World {
         }
     }
 
-    /// Crude day-night phase in [0,1). 0 = midnight, 0.5 = noon.
-    pub fn day_phase(&self) -> f32 {
-        let t = (self.tick % self.day_length as u64) as f32 / self.day_length as f32;
-        t
+    /// Village calendar time now (see calendar.rs).
+    pub fn time(&self) -> crate::calendar::VillageTime {
+        crate::calendar::time_at(self.tick)
     }
 
     pub fn is_night(&self) -> bool {
-        let p = self.day_phase();
-        p < 0.15 || p > 0.85
+        crate::calendar::is_night(self.tick)
+    }
+
+    /// Ambient daylight 0.0..=1.0, for rendering.
+    pub fn daylight(&self) -> f32 {
+        crate::calendar::daylight(self.tick)
     }
 
     /// Check if any adjacent tile (4-directional) matches a predicate.
@@ -988,6 +987,8 @@ mod tests {
     fn bots_stay_in_bounds_and_on_walkable_tiles() {
         for seed in [1u64, 42, 777] {
             let mut w = World::new(seed);
+            // Start at 20:00 so the run crosses dusk into night.
+            w.tick = (20 - crate::calendar::START_HOUR) * crate::calendar::TICKS_PER_HOUR;
             for _ in 0..20_000 {
                 w.step();
                 for b in w.bots.iter().filter(|b| b.alive) {

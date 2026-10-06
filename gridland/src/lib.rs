@@ -2,6 +2,7 @@ use wasm_bindgen::prelude::*;
 
 mod ai;
 mod bot;
+mod calendar;
 mod render;
 mod rng;
 mod world;
@@ -54,6 +55,22 @@ impl Gridland {
 
     pub fn current_tick(&self) -> u32 {
         self.world.tick as u32
+    }
+
+    /// Activity-clock ticks per real second at 1× (real time).
+    pub fn ticks_per_sec(&self) -> u32 {
+        calendar::TICKS_PER_SEC as u32
+    }
+
+    /// Village calendar time as JSON: year, season, day, hour, minute,
+    /// day_index (days since founding), night, daylight (0..1).
+    pub fn clock(&self) -> String {
+        let t = self.world.time();
+        format!(
+            "{{\"year\":{},\"season\":\"{}\",\"day\":{},\"hour\":{},\"minute\":{},\"day_index\":{},\"night\":{},\"daylight\":{:.3}}}",
+            t.year, t.season.label(), t.day, t.hour, t.minute, t.day_index,
+            self.world.is_night(), self.world.daylight()
+        )
     }
 
     /// Click at pixel coords → select bot if present, else return false.

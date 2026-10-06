@@ -71,9 +71,9 @@ function summarise(raw) {
   return { ticks: raw.ticks, sample_every: raw.sample_every, mean, runs };
 }
 
-function runProbe(crateDir) {
+function runProbe(crateDir, args = []) {
   console.log(`  probe: ${path.relative(ROOT, crateDir) || "."}`);
-  const out = sh("cargo", ["run", "--release", "--quiet", "--example", "probe"], {
+  const out = sh("cargo", ["run", "--release", "--quiet", "--example", "probe", "--", ...args], {
     cwd: crateDir,
     env: { ...process.env, CARGO_TARGET_DIR: PROBE_TARGET, RUSTFLAGS: "-Awarnings" },
   });
@@ -97,7 +97,8 @@ function probeCommit(commit) {
     gitExtract(commit, "", tmp);
     fs.mkdirSync(path.join(tmp, "examples"), { recursive: true });
     fs.copyFileSync(PROBE_SRC, path.join(tmp, "examples", "probe.rs"));
-    return runProbe(tmp);
+    // Historical builds were measured over 60k ticks sampled every 6k (pre-calendar).
+    return runProbe(tmp, ["60000", "6000"]);
   } finally {
     fs.rmSync(tmp, { recursive: true, force: true });
   }

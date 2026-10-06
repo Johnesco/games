@@ -10,7 +10,7 @@ const worldView = document.getElementById("world-view");
 
 let world = null;
 let memory = null;
-let speed = 2;
+let speed = 1;
 let tool = "select";
 let selectedBotId = null;
 let zoom = 1;
@@ -21,8 +21,9 @@ let tileSizeCss = 8; // css pixels per tile at current zoom
 // --- Activity clock ---
 // Sim ticks run on a fixed timestep against real time, not once per animation
 // frame — otherwise a 144 Hz monitor runs the world 2.4× faster than a 60 Hz one.
-// 60 ticks/s at 1× is the rate the sim was tuned at (on 60 Hz screens).
-const TICKS_PER_SEC = 60;
+// 1× is real time: the rate comes from the sim (calendar.rs, 120 ticks/s), so
+// the page and the village calendar agree. 1 real hour = 1 village day.
+let ticksPerSec = 120;
 // Longest real-time gap one frame may simulate. Bigger gaps (a hidden tab, a
 // stall) are dropped for now; the away/catch-up model will own them later.
 const MAX_FRAME_MS = 250;
@@ -50,6 +51,7 @@ async function boot() {
   memory = wasm.memory;
   const seed = (Math.random() * 0xffffffff) >>> 0;
   world = new Gridland(seed);
+  ticksPerSec = world.ticks_per_sec();
   window.__gl = world;
   baseW = world.canvas_w();
   baseH = world.canvas_h();
@@ -386,7 +388,7 @@ function loop(now) {
   const dt = lastFrameMs === null ? 0 : Math.min(now - lastFrameMs, MAX_FRAME_MS);
   lastFrameMs = now;
   if (world) {
-    tickAccum += (dt / 1000) * TICKS_PER_SEC * speed;
+    tickAccum += (dt / 1000) * ticksPerSec * speed;
     const ticks = Math.floor(tickAccum);
     tickAccum -= ticks;
     for (let i = 0; i < ticks; i++) world.tick();
@@ -557,11 +559,13 @@ function refreshPanels() {
     stats.avg_warmth < 30 ? "#8ad0ff" : stats.avg_warmth < 60 ? "#e6b45a" : "#7ee0a1";
   const weatherGlyph =
     stats.weather === "rain" ? "\u2614" :
-    stats.weather === "clearing" ? "\u26c5" : "\u2600";
-  const nightGlyph = stats.night ? " \u263e" : " \u2600";
+    stats.weather === "clearing" ? "\u26c5" : "";
+  const clock = JSON.parse(world.clock());
+  const nightGlyph = clock.night ? " \u263e" : " \u2600";
+  const hhmm = `${String(clock.hour).padStart(2, "0")}:${String(clock.minute).padStart(2, "0")}`;
   statsEl.innerHTML = `
+    <b>${hhmm}</b> ${clock.season} ${clock.day}, year ${clock.year}${nightGlyph} ${weatherGlyph} &nbsp;·&nbsp;
     tick <b>${stats.tick}</b> &nbsp;·&nbsp;
-    ${weatherGlyph}${nightGlyph} &nbsp;·&nbsp;
     bots <b>${stats.bots}</b> &nbsp;·&nbsp;
     berries <b>${stats.berries}</b> (cooked <b>${stats.cooked}</b>) &nbsp;·&nbsp;
     mushrooms <b>${stats.mushrooms}</b> &nbsp;·&nbsp;

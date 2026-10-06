@@ -95,6 +95,61 @@ pub fn render_to_buffer(world: &World, buf: &mut [u8]) {
         let selected = world.selected_bot == Some(bot.id as usize);
         draw_bot(buf, bot, world.tick, selected);
     }
+    // Lighting pass: dusk, night and dawn darken the world; fires light it.
+    let daylight = world.daylight();
+    if daylight < 1.0 {
+        apply_lighting(world, buf, daylight);
+    }
+}
+
+/// Darkest ambient light at deep night (fraction of full brightness).
+const NIGHT_AMBIENT: f32 = 0.30;
+/// How far a campfire's light reaches, in tiles.
+const FIRE_LIGHT_RADIUS: f32 = 3.5;
+
+/// Per-tile lighting, applied as a multiply over the finished frame. Tiles
+/// are lit in whole 8×8 blocks to keep the 8-bit look. Night shadows lean
+/// blue; firelight leans warm.
+fn apply_lighting(world: &World, buf: &mut [u8], daylight: f32) {
+    let ambient = NIGHT_AMBIENT + (1.0 - NIGHT_AMBIENT) * daylight;
+    // light[i] = (brightness, warmth 0..1)
+    let mut light = vec![(ambient, 0.0f32); W * H];
+    let r = FIRE_LIGHT_RADIUS.ceil() as i32;
+    for &(fx, fy) in world.fire_fuel.keys() {
+        for dy in -r..=r {
+            for dx in -r..=r {
+                let (x, y) = (fx + dx, fy + dy);
+                if x < 0 || y < 0 || x >= W as i32 || y >= H as i32 {
+                    continue;
+                }
+                let d = ((dx * dx + dy * dy) as f32).sqrt();
+                let f = (1.0 - d / FIRE_LIGHT_RADIUS).max(0.0);
+                let l = &mut light[y as usize * W + x as usize];
+                let lit = ambient + (1.0 - ambient) * f;
+                if lit > l.0 {
+                    *l = (lit, f * (1.0 - daylight));
+                }
+            }
+        }
+    }
+    for ty in 0..H {
+        for tx in 0..W {
+            let (l, warm) = light[ty * W + tx];
+            // Shadows keep some blue; firelight pushes red up, blue down.
+            let lr = (l * (1.0 + 0.25 * warm)).min(1.0);
+            let lg = l;
+            let lb = (l + (1.0 - l) * 0.35) * (1.0 - 0.3 * warm);
+            for py in 0..TILE {
+                let row = ((ty * TILE + py) * CANVAS_W + tx * TILE) * 4;
+                for px in 0..TILE {
+                    let i = row + px * 4;
+                    buf[i] = (buf[i] as f32 * lr) as u8;
+                    buf[i + 1] = (buf[i + 1] as f32 * lg) as u8;
+                    buf[i + 2] = (buf[i + 2] as f32 * lb) as u8;
+                }
+            }
+        }
+    }
 }
 
 fn px(buf: &mut [u8], x: usize, y: usize, color: [u8; 3]) {

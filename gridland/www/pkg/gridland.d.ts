@@ -27,6 +27,11 @@ export class Gridland {
      * Returns the selected bot id, or -1 if none.
      */
     click_select(px: number, py: number): number;
+    /**
+     * Village calendar time as JSON: year, season, day, hour, minute,
+     * day_index (days since founding), night, daylight (0..1).
+     */
+    clock(): string;
     current_tick(): number;
     /**
      * Light a campfire — attracts bots, lifts mood, soothes loneliness.
@@ -53,6 +58,10 @@ export class Gridland {
      */
     stats(): string;
     tick(): void;
+    /**
+     * Activity-clock ticks per real second at 1× (real time).
+     */
+    ticks_per_sec(): number;
     tile_size(): number;
 }
 
@@ -69,6 +78,7 @@ export interface InitOutput {
     readonly gridland_clear_selection: (a: number) => void;
     readonly gridland_clear_tile: (a: number, b: number, c: number) => void;
     readonly gridland_click_select: (a: number, b: number, c: number) => number;
+    readonly gridland_clock: (a: number) => [number, number];
     readonly gridland_current_tick: (a: number) => number;
     readonly gridland_drop_fire: (a: number, b: number, c: number) => void;
     readonly gridland_drop_food: (a: number, b: number, c: number) => void;
@@ -80,6 +90,7 @@ export interface InitOutput {
     readonly gridland_selected_info: (a: number) => [number, number];
     readonly gridland_stats: (a: number) => [number, number];
     readonly gridland_tick: (a: number) => void;
+    readonly gridland_ticks_per_sec: (a: number) => number;
     readonly gridland_tile_size: (a: number) => number;
     readonly gridland_canvas_w: (a: number) => number;
     readonly __wbindgen_externrefs: WebAssembly.Table;

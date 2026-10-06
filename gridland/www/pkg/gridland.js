@@ -95,6 +95,23 @@ export class Gridland {
         return ret;
     }
     /**
+     * Village calendar time as JSON: year, season, day, hour, minute,
+     * day_index (days since founding), night, daylight (0..1).
+     * @returns {string}
+     */
+    clock() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.gridland_clock(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * @returns {number}
      */
     current_tick() {
@@ -194,6 +211,14 @@ export class Gridland {
     }
     tick() {
         wasm.gridland_tick(this.__wbg_ptr);
+    }
+    /**
+     * Activity-clock ticks per real second at 1× (real time).
+     * @returns {number}
+     */
+    ticks_per_sec() {
+        const ret = wasm.gridland_ticks_per_sec(this.__wbg_ptr);
+        return ret >>> 0;
     }
     /**
      * @returns {number}
