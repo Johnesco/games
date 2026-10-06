@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 mod ai;
 mod bot;
 mod calendar;
+mod path;
 mod render;
 mod rng;
 mod world;

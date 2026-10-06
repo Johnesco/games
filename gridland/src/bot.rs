@@ -386,6 +386,14 @@ pub struct Bot {
     pub reputation: i32,
     /// Number of berries this bot has personally cooked.
     pub berries_cooked: u32,
+
+    // -- Route cache (see ai::step_toward_target / path.rs) ---------------
+    /// Remaining planned steps, next step LAST (so it can be popped).
+    pub route: Vec<(i32, i32)>,
+    /// The target the cached route leads to.
+    pub route_to: Option<(i32, i32)>,
+    /// Steps taken on the cached route since it was planned.
+    pub route_age: u8,
 }
 
 impl Bot {
@@ -474,6 +482,9 @@ impl Bot {
             deliveries: 0,
             reputation: 0,
             berries_cooked: 0,
+            route: Vec::new(),
+            route_to: None,
+            route_age: 0,
         }
     }
 

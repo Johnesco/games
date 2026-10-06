@@ -1008,3 +1008,44 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod death_diag {
+    use super::*;
+    /// Temporary diagnostic (generations work): print each bot's state on the
+    /// tick it dies. `cargo test --release death_diag -- --ignored --nocapture`
+    #[test]
+    #[ignore]
+    fn why_do_bots_die() {
+        let seed: u64 = std::env::var("DIAG_SEED").ok().and_then(|v| v.parse().ok()).unwrap_or(1);
+        let ticks: u64 = std::env::var("DIAG_TICKS").ok().and_then(|v| v.parse().ok()).unwrap_or(140_000);
+        let mut w = World::new(seed);
+        let mut prev: Vec<String> = Vec::new();
+        for _ in 0..ticks {
+            prev = w.bots.iter().map(|b| format!(
+                "{:<4} {:<9} goal={:<11} H{:>3.0} E{:>3.0} T{:>3.0} S{:>3.0} W{:>3.0} M{:>4.0} carry={:<12} stuck={:<4} on={:?} home={} thought=\"{}\"",
+                b.name, b.job.label(), b.goal.label(), b.hunger, b.energy, b.thirst, b.stress, b.warmth, b.mood,
+                b.carrying.label(), b.stuck_ticks, w.tile(b.x, b.y), b.home.is_some(), b.thought)
+                + &match b.target {
+                    Some(t) => {
+                        let st = crate::path::first_step(&w, (b.x, b.y), t);
+                        let occ = match st {
+                            crate::path::Step::Walk(x, y) => w.bot_at(x, y).map(|o| format!(" occupied by {} ({}, cd={}, chat={:?})", w.bots[o].name, w.bots[o].goal.label(), w.bots[o].commitment_delay, w.bots[o].chatting_with)).unwrap_or_default(),
+                            _ => String::new(),
+                        };
+                        format!(" target=({},{}) from=({},{}) step={:?}{} delay={}", t.0, t.1, b.x, b.y, st, occ, b.commitment_delay)
+                    }
+                    None => format!(" target=None delay={}", b.commitment_delay),
+                }).collect();
+            let alive: Vec<bool> = w.bots.iter().map(|b| b.alive).collect();
+            w.step();
+            for (i, b) in w.bots.iter().enumerate() {
+                if alive[i] && !b.alive {
+                    let t = crate::calendar::time_at(w.tick);
+                    println!("{:02}:{:02} DIED {}", t.hour, t.minute, prev[i]);
+                }
+            }
+        }
+        let _ = prev;
+    }
+}

@@ -72,7 +72,10 @@ pub fn think_and_act(world: &mut World, idx: usize, snap: &[(i32, i32, bool, u32
             // like cooking. Carrying a cookable item means the bot is mid-chain —
             // the full 4s contemplation stalls the cooking pipeline.
             let urgent_task = bot.carrying.is_cookable() && matches!(new_goal, Goal::Cook | Goal::Deliver);
-            bot.commitment_delay = if urgent_task { 80 } else { 500 };
+            // A hungry or parched bot doesn't stand and ponder for 4 seconds.
+            let urgent_need = (new_goal == Goal::Eat && bot.hunger >= 70.0)
+                || (new_goal == Goal::Drink && bot.thirst >= 70.0);
+            bot.commitment_delay = if urgent_need { 40 } else if urgent_task { 80 } else { 500 };
             bot.announce_now(line);
         } else {
             bot.goal_ticks = bot.goal_ticks.saturating_add(1);
@@ -596,6 +599,31 @@ fn try_interact(world: &mut World, idx: usize) {
     let goal = world.bots[idx].goal;
     let desperate = world.bots[idx].hunger >= 85.0;
     let on_errand = !desperate && matches!(goal, Goal::Cook | Goal::Gather | Goal::Deliver);
+
+    // --- Food in hand ---
+    // A hungry bot eats what it's carrying; a starving one eats it even mid-
+    // errand. (Before 2026-10-06 nothing ever ate carried food, and bots
+    // starved holding cooked fish.)
+    let carried = world.bots[idx].carrying;
+    if carried.is_food() {
+        if let Some(props) = carried.to_tile().and_then(|t| t.food_props()) {
+            let hunger = world.bots[idx].hunger;
+            if desperate || (!on_errand && hunger >= 70.0 && hunger > props.hunger_threshold) {
+                let was_starving = hunger > 80.0;
+                world.bots[idx].hunger = (hunger - props.hunger_relief).max(0.0);
+                world.bots[idx].energy = (world.bots[idx].energy + props.energy_gain).min(100.0);
+                world.bots[idx].mood = (world.bots[idx].mood + props.mood_boost).min(100.0);
+                world.bots[idx].stress = (world.bots[idx].stress - props.stress_relief).max(0.0);
+                world.bots[idx].carrying = Carry::None;
+                world.bots[idx].carry_ticks = 0;
+                if was_starving {
+                    let name = world.bots[idx].name.clone();
+                    world.log(format!("{} ate the {} they were carrying", name, carried.label()));
+                }
+                return;
+            }
+        }
+    }
 
     if let Some(props) = t.food_props() {
         if on_errand { return; }
@@ -2027,6 +2055,49 @@ fn nearest_complaint_tree(world: &World, bx: i32, by: i32) -> Option<(i32, i32)>
     best.map(|(_, p)| p)
 }
 
+/// Movement attempts a bot waits behind another bot before squeezing past.
+const BOT_PATIENCE: u16 = 6;
+/// Steps a cached route is trusted before re-planning (to notice new shortcuts).
+const ROUTE_REPLAN_STEPS: u8 = 12;
+
+/// The next step toward `target`, from the bot's cached route when it's still
+/// valid, else from a fresh A* plan. Re-planning every step made movement the
+/// most expensive thing in the sim.
+fn next_route_step(world: &mut World, idx: usize, target: (i32, i32)) -> crate::path::Step {
+    use crate::path::{classify, route, Step};
+    let (bx, by) = (world.bots[idx].x, world.bots[idx].y);
+    let b = &world.bots[idx];
+    let cached_ok = b.route_to == Some(target)
+        && b.route_age < ROUTE_REPLAN_STEPS
+        && b.route.last().map_or(false, |&(nx, ny)| {
+            // still adjacent (we may have been pushed or squeezed) and still
+            // the same kind of step it was when planned
+            (nx - bx).abs() + (ny - by).abs() == 1
+                && (world.tile(nx, ny).walkable() || b.route.len() == 1 || (nx, ny) == target)
+        });
+    if !cached_ok {
+        let bot = &mut world.bots[idx];
+        bot.route_age = 0;
+        bot.route_to = Some(target);
+        match route(world, (bx, by), target) {
+            None => { world.bots[idx].route.clear(); world.bots[idx].route_to = None; return Step::Unreachable; }
+            Some(mut r) => { r.reverse(); world.bots[idx].route = r; }
+        }
+    }
+    let bot = &mut world.bots[idx];
+    match bot.route.last().copied() {
+        None => { bot.route_to = None; Step::Arrived }
+        Some(p) => classify(world, p),
+    }
+}
+
+/// Call after the bot actually moved onto the route's next tile.
+fn advance_route(world: &mut World, idx: usize) {
+    let b = &mut world.bots[idx];
+    b.route.pop();
+    b.route_age = b.route_age.saturating_add(1);
+}
+
 fn step_toward_target(world: &mut World, idx: usize) {
     let (bx, by) = (world.bots[idx].x, world.bots[idx].y);
     let target = match world.bots[idx].target {
@@ -2049,55 +2120,50 @@ fn step_toward_target(world: &mut World, idx: usize) {
         return;
     }
 
-    let start_dist = (target.0 - bx).abs() + (target.1 - by).abs();
-
-    let mut best_dx = 0i32;
-    let mut best_dy = 0i32;
-    let mut best_score = i32::MIN;
-
-    let choices: [(i32, i32); 5] = [(1, 0), (-1, 0), (0, 1), (0, -1), (0, 0)];
-    for (dx, dy) in choices.iter() {
-        let nx = bx + dx;
-        let ny = by + dy;
-        if nx < 0 || ny < 0 || nx >= W as i32 || ny >= H as i32 {
-            continue;
+    // Plan a route (A*, see path.rs) and take its first step. Detours around
+    // trees and rocks are preferred; when none is reasonable the route runs
+    // into the obstacle and the frustration logic below clears it.
+    let mut moved = false;
+    let mut route_blocker: Option<(i32, i32, Tile)> = None;
+    match next_route_step(world, idx, target) {
+        crate::path::Step::Arrived => {
+            let t = world.tile(target.0, target.1);
+            if t.is_clearable() {
+                // Standing beside a tree or rock we were sent to: work on it.
+                route_blocker = Some((target.0, target.1, t));
+            } else {
+                world.bots[idx].target = None;
+                return;
+            }
         }
-        let t = world.tile(nx, ny);
-        if !t.walkable() {
-            continue;
+        crate::path::Step::Unreachable => {
+            // Nothing connects us to it (across water). Forget it and re-plan.
+            world.bots[idx].forget(|m| m.x == target.0 && m.y == target.1);
+            world.bots[idx].target = None;
+            world.bots[idx].boredom = (world.bots[idx].boredom + 0.2).min(100.0);
+            return;
         }
-        if (*dx != 0 || *dy != 0) && world.bot_at(nx, ny).is_some() {
-            continue;
+        crate::path::Step::Obstacle(ox, oy) => {
+            route_blocker = Some((ox, oy, world.tile(ox, oy)));
         }
-        let dist = (target.0 - nx).abs() + (target.1 - ny).abs();
-        // Paths give a +3 preference — bots drift onto existing roads when
-        // the detour is small (within 1 tile of the optimal line). This
-        // creates self-reinforcing road networks: more traffic → stronger
-        // path → more bots route through → even more traffic. Sand is slow.
-        let score = -dist * 10
-            + match t {
-                Tile::Path => 3,
-                Tile::Sand => -2,
-                Tile::Home => 1,
-                _ => 0,
-            };
-        if score > best_score {
-            best_score = score;
-            best_dx = *dx;
-            best_dy = *dy;
+        crate::path::Step::Walk(nx, ny) => {
+            // Another bot in the way: wait politely for a few steps, then
+            // squeeze past (bots may share a tile briefly). Treating bots as
+            // walls let whole queues starve behind one water-edge tile.
+            let blocked_by_bot = world.bot_at(nx, ny).is_some();
+            if !blocked_by_bot || world.bots[idx].stuck_ticks >= BOT_PATIENCE {
+                world.bots[idx].x = nx;
+                world.bots[idx].y = ny;
+                world.bots[idx].facing = (nx - bx, ny - by);
+                world.mark_step(nx, ny);
+                advance_route(world, idx);
+                moved = true;
+            }
         }
-    }
-
-    world.bots[idx].x = (bx + best_dx).clamp(0, W as i32 - 1);
-    world.bots[idx].y = (by + best_dy).clamp(0, H as i32 - 1);
-    if best_dx != 0 || best_dy != 0 {
-        world.bots[idx].facing = (best_dx, best_dy);
-        let (nx, ny) = (world.bots[idx].x, world.bots[idx].y);
-        world.mark_step(nx, ny);
     }
 
     // --- Frustration tracking ---
-    // When the bot makes no forward progress, frustration builds.
+    // When the bot makes no progress, frustration builds.
     // This drives two implicit behaviours:
     //   1. The bot starts working on clearing the obstacle (slow for everyone,
     //      fast for skilled/tooled bots — anyone CAN break through, but
@@ -2105,34 +2171,9 @@ fn step_toward_target(world: &mut World, idx: usize) {
     //   2. Stress and boredom rise, making the bot more likely to socialise
     //      and mention the obstacle, which spreads knowledge through memory
     //      and relationships.
-    let end_dist = (target.0 - world.bots[idx].x).abs() + (target.1 - world.bots[idx].y).abs();
-    if end_dist >= start_dist && world.bots[idx].goal != Goal::Flee {
+    if !moved && world.bots[idx].goal != Goal::Flee {
         world.bots[idx].stuck_ticks = world.bots[idx].stuck_ticks.saturating_add(1);
-
-        // Identify what's blocking us on the direct line to the target.
-        let ddx = (target.0 - bx).signum();
-        let ddy = (target.1 - by).signum();
-        let mut blocker: Option<(i32, i32, Tile)> = None;
-        if ddx != 0 {
-            let t = world.tile(bx + ddx, by);
-            if t.is_clearable() {
-                blocker = Some((bx + ddx, by, t));
-            }
-        }
-        if blocker.is_none() && ddy != 0 {
-            let t = world.tile(bx, by + ddy);
-            if t.is_clearable() {
-                blocker = Some((bx, by + ddy, t));
-            }
-        }
-        // Check diagonals too — sometimes both cardinal directions are open
-        // but the real obstacle is at a slight angle.
-        if blocker.is_none() && ddx != 0 && ddy != 0 {
-            let t = world.tile(bx + ddx, by + ddy);
-            if t.is_clearable() {
-                blocker = Some((bx + ddx, by + ddy, t));
-            }
-        }
+        let blocker = route_blocker;
 
         if let Some((ox, oy, otile)) = blocker {
             // Track which obstacle we're working on. If it changed, reset

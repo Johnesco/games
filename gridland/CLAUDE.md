@@ -60,3 +60,10 @@ When cutting, fold these into the diary notes.
 - **Finding for generations:** over one full village day (probe, 3 seeds) the population falls from 24 to 7–9,
   mostly *in daylight*. Bots stay warm at night (homes and fires). Lives last about 1 real hour against the 2-week
   target, because hunger, thirst and death run on the fast tick scale. Generations must retune that.
+- **Bots stop starving by accident.** A diagnostic (`world::death_diag`, ignored test; `DIAG_SEED` / `DIAG_TICKS` env)
+  showed every death was starvation *while trying to eat*. Fixes: A* routing (`src/path.rs`; trees and rocks are
+  expensive but passable, so clearing still happens) with a per-bot route cache; eat carried food when hungry (and
+  mid-errand when starving); wait ~6 steps then squeeze past another bot instead of queueing forever; urgent eat and
+  drink pivots skip the 4 s "contemplation" freeze. Full-day probe: 24 / 24 / 23 survivors (was 7–9).
+- **Open: sim speed.** ~1,300 ticks/s in wasm with 24 bots at dawn (~11× real time). The route cache didn't speed
+  the probe up (5:57 vs 5:20), so pathing isn't the bottleneck. Profile before optimising further.
