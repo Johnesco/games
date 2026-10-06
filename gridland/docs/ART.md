@@ -35,7 +35,16 @@ Decided 2026-10-06.
 - UI overlays (bubbles, selection) are already positioned in world coordinates; keep it that way
   (see the world-size note in memory: UI must not be tied to world size).
 
-## First step: a spike
+## Tile size: 32 px (decided 2026-10-06)
 
-Draw a few bots procedurally (child, adult, elder; two parents and their child) at 16 px and at 32 px, plus a
-small patch of terrain, and look at them before committing to a tile size or a renderer.
+Chosen after the sprite test (`spikes/sprites/`, commit 869e7cf). At 32 px characters have readable faces (eyes, brows,
+expressions, wrinkles) and family resemblance shows; at 16 px a face is three pixels. Consequences:
+- A 64×64 world is 2,048 px wide at 1×, so the camera (pan, zoom out below 1×, follow a bot) is required, not optional.
+  The default view is zoomed out, and you zoom in to read faces.
+- Terrain and objects must be drawn with real 32 px detail. The spike only doubled its 16 px shapes.
+- Character geometry starts from the spike's 32 px `GEOM` (child, adult, elder) and layer rules.
+
+## The spike (done)
+
+Built and reviewed: `spikes/sprites/` draws families, jobs, moods and a village corner at both sizes. The renderer
+choice (Canvas2D vs PixiJS) is still open.
