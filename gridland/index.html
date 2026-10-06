@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gridland Diary</title>
+  <meta name="description" content="A tiny watchable world. Villagers tile, harvest, cook, and carry on without you. Rust + Wasm. Every build, playable.">
+  <style>
+    :root {
+      --bg: #11151b;
+      --panel: #1a2028;
+      --line: #2e3845;
+      --text: #d8e1ea;
+      --text-dim: #8a96a4;
+      --accent: #8ad0ff;
+      --accent-2: #ffc26b;
+      --good: #7ee0a1;
+      --bad: #ff7878;
+      --mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      background: radial-gradient(1200px 600px at 20% 0%, #1a232e 0%, var(--bg) 60%) fixed, var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px 64px; }
+    header h1 {
+      margin: 0; font-size: 22px; letter-spacing: 8px; color: var(--accent);
+      text-shadow: 0 0 12px rgba(138, 208, 255, 0.25);
+    }
+    header .sub { color: var(--text-dim); margin: 6px 0 20px; }
+    .cta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 36px; }
+    .btn {
+      display: inline-block; padding: 9px 16px; border: 1px solid var(--accent);
+      color: var(--bg); background: var(--accent); text-decoration: none; font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .btn:hover { background: #b4e2ff; }
+    .link { color: var(--text-dim); font-size: 12px; }
+    .link:hover { color: var(--accent-2); }
+    a { color: var(--accent); }
+
+    .entry { border-top: 1px solid var(--line); padding: 26px 0 8px; }
+    .entry-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+    .num { color: var(--accent-2); font-weight: 700; letter-spacing: 2px; }
+    .date { color: var(--text-dim); font-size: 12px; }
+    .badge {
+      font-size: 10px; letter-spacing: 1px; color: var(--text-dim);
+      border: 1px solid var(--line); padding: 0 6px;
+    }
+    .entry h2 { font-size: 17px; margin: 4px 0 10px; color: var(--text); font-weight: 700; }
+    .entry p { margin: 0 0 10px; }
+    .entry .play { margin: 4px 0 14px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; }
+    .known { margin: 0 0 12px; padding: 10px 14px; background: var(--panel); border-left: 2px solid var(--bad); }
+    .known b { color: var(--bad); font-size: 11px; letter-spacing: 1px; }
+    .known ul { margin: 4px 0 0; padding-left: 18px; }
+
+    .probe { background: var(--panel); border: 1px solid var(--line); padding: 12px 14px; margin: 0 0 14px; }
+    .probe-title { font-size: 11px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 8px; }
+    .probe-grid { display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center; }
+    .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 6px 12px; font-size: 12px; }
+    .stats div span { display: block; color: var(--text-dim); font-size: 10px; letter-spacing: 1px; }
+    .stats div b { font-size: 15px; }
+    .spark { display: block; }
+    .spark-cap { font-size: 10px; color: var(--text-dim); text-align: center; }
+    @media (max-width: 560px) {
+      .probe-grid { grid-template-columns: 1fr; }
+      .spark { width: 100%; height: auto; }
+    }
+    footer { border-top: 1px solid var(--line); margin-top: 24px; padding-top: 16px; color: var(--text-dim); font-size: 12px; }
+    .err { color: var(--bad); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>GRIDLAND</h1>
+      <div class="sub">A tiny watchable world, and every version of it. Newest first. Each build plays exactly as it shipped.</div>
+    </header>
+    <div class="cta" id="cta"></div>
+    <main id="entries"><p class="link">loading builds…</p></main>
+    <footer>
+      Each build's numbers come from a headless soak test: the sim runs on seeds 1, 42 and 777 for
+      60,000 ticks (about 8 minutes at 2×), and the figures are the end-of-run averages. The line shows
+      population over time for each seed, zoomed to 10–25 bots.
+      Source: <a href="https://github.com/Johnesco/games/tree/master/gridland">Johnesco/games/gridland</a>.
+    </footer>
+  </div>
+  <script>
+    const REPO = "https://github.com/Johnesco/games";
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    // Notes may use `code` spans; everything else is escaped.
+    const fmt = (s) => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+    const COLORS = ["#8ad0ff", "#ffc26b", "#7ee0a1"];
+
+    function spark(runs) {
+      const w = 180, h = 70, lo = 10, hi = 25;
+      const y = (v) => (h - 4 - ((Math.min(hi, Math.max(lo, v)) - lo) / (hi - lo)) * (h - 8)).toFixed(1);
+      const lines = runs.map((r, i) => {
+        const n = r.population.length;
+        const pts = r.population.map((v, j) =>
+          `${(j / Math.max(1, n - 1) * (w - 4) + 2).toFixed(1)},${y(v)}`).join(" ");
+        return `<polyline points="${pts}" fill="none" stroke="${COLORS[i % 3]}" stroke-width="1.5" />`;
+      }).join("");
+      const y24 = y(24);
+      return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="population over time per seed">
+        <line x1="0" x2="${w}" y1="${y24}" y2="${y24}" stroke="#2e3845" stroke-dasharray="3 3" />${lines}</svg>
+        <div class="spark-cap">population · 10–25 bots · dashed = 24 at start</div>`;
+    }
+
+    function probe(p) {
+      if (!p) return "";
+      const m = p.mean;
+      const cell = (label, v) => v === null || v === undefined ? "" : `<div><span>${label}</span><b>${v}</b></div>`;
+      return `<div class="probe">
+        <div class="probe-title">SOAK · ${p.ticks.toLocaleString()} TICKS · MEAN OF ${p.runs.length} SEEDS</div>
+        <div class="probe-grid">
+          <div class="stats">
+            ${cell("BOTS LEFT", m.bots)}${cell("HOMES", m.homes)}${cell("BERRIES", m.berries)}
+            ${cell("TREES", m.trees)}${cell("FIRES", m.fires)}${cell("COMPLAINTS", m.complaints)}
+            ${cell("LOGS CHOPPED", m.logs_chopped_total)}${cell("COOKED", m.berries_cooked_total)}${cell("MOOD", m.avg_mood)}
+          </div>
+          <div>${spark(p.runs)}</div>
+        </div>
+      </div>`;
+    }
+
+    function entry(b, latest) {
+      const commit = b.commit
+        ? `<a href="${REPO}/commit/${b.commit}">commit ${b.commit}</a>`
+        : b.base ? `<span>cut on ${b.base}${b.base_dirty ? "+" : ""}</span>` : "";
+      return `<article class="entry" id="build-${b.n}">
+        <div class="entry-head">
+          <span class="num">BUILD ${b.n}</span><span class="date">${esc(b.date)}</span>
+          ${b.n === latest ? '<span class="badge">LATEST</span>' : ""}
+          ${b.recovered ? '<span class="badge" title="reconstructed from git history">RECOVERED</span>' : ""}
+        </div>
+        <h2>${esc(b.title)}</h2>
+        <div class="play"><a href="${esc(b.play)}">▶ play build ${b.n}</a>${commit}<a href="#build-${b.n}" class="link">#</a></div>
+        ${b.notes.map((p) => `<p>${fmt(p)}</p>`).join("")}
+        ${b.known?.length ? `<div class="known"><b>KNOWN ISSUES AT THIS BUILD</b><ul>${b.known.map((k) => `<li>${fmt(k)}</li>`).join("")}</ul></div>` : ""}
+        ${probe(b.probe)}
+      </article>`;
+    }
+
+    fetch("builds.json", { cache: "no-cache" })
+      .then((r) => r.json())
+      .then((m) => {
+        const latest = m.builds.find((b) => b.n === m.latest);
+        document.getElementById("cta").innerHTML =
+          (latest ? `<a class="btn" href="${esc(latest.play)}">▶ PLAY BUILD ${latest.n}</a>` : "") +
+          `<a class="link" href="www/">or the in-progress dev build →</a>`;
+        document.getElementById("entries").innerHTML =
+          [...m.builds].reverse().map((b) => entry(b, m.latest)).join("");
+        if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
+      })
+      .catch((e) => {
+        document.getElementById("entries").innerHTML =
+          `<p class="err">Couldn't load builds.json (${esc(e.message)}). Serve this folder over HTTP.</p>`;
+      });
+  </script>
+</body>
+</html>

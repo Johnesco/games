@@ -19,18 +19,6 @@ bundle size, and control. Consider upgrading if you want:
 - **[Macroquad](https://macroquad.rs/)** — tiny 2D engine, input & audio built-in
 - **[pixels](https://crates.io/crates/pixels)** — nice pixel-buffer wrapper
 
-## Builds & diary
-
-Every design change ships as a numbered, playable build. The diary at
-`index.html` (live: <https://johnesco.github.io/games/gridland/>) lists them
-all, each with its notes and soak-test stats. `www/` is the in-progress dev
-copy. The process is described in [CLAUDE.md](CLAUDE.md); the short version:
-
-```bash
-cargo test --release
-node tools/cut.mjs cut --title "Headline" --notes "What changed."
-```
-
 ## Build
 
 ```bash
@@ -43,12 +31,12 @@ The app loads WASM modules, so it needs HTTP (not `file://`):
 
 ```bash
 # any static server works — e.g.
-python -m http.server 8080
+python -m http.server 8080 --directory www
 # or
-npx http-server . -p 8080
+npx http-server www -p 8080
 ```
 
-Then open <http://localhost:8080/> for the diary or <http://localhost:8080/www/> for the dev build.
+Then open <http://localhost:8080>.
 
 ## Bot brain model
 

@@ -1,0 +1,65 @@
+{
+  "_comment": "Builds recovered from git history (2026-10-06). Gridland was built across sessions before its first commit, so build 1 is the earliest version that still exists; nothing older survives in git, the pre-scrub backup bundle, or session transcripts. Each build is `git archive <commit>:gridland/www` byte-for-byte (minus wasm-pack's pkg/.gitignore), since every sim-changing commit committed its compiled wasm alongside the source. `node tools/cut.mjs backfill` regenerates them.",
+  "builds": [
+    {
+      "n": 1,
+      "commit": "3fd6de3",
+      "date": "2026-04-16",
+      "title": "A village in a box",
+      "notes": [
+        "Day one, already big. 24 bots in a 64×64 tile world, written in Rust and compiled to WebAssembly, with every pixel pushed into a canvas by hand.",
+        "Each bot has 8 drives (hunger, energy, social, boredom, mood, thirst, stress, warmth), 5 personality traits and one of 12 jobs. Each tick it scores 19 possible goals and picks the most pressing, with a little stickiness so it doesn't flip-flop.",
+        "The world already has farming, fishing, cooking, crafting stone axes, hauling, friendships and grudges, moods that spread, paths worn into the grass, campfires that burn down, rain, day and night, and graves."
+      ],
+      "known": [
+        "The cooking chain never fires: \"cooked\" stays at 0 for the whole run."
+      ]
+    },
+    {
+      "n": 2,
+      "commit": "8a59bd2",
+      "date": "2026-04-16",
+      "title": "Somebody finally cooks dinner",
+      "notes": [
+        "Cooking was dead: cooks wouldn't head for a fire they hadn't seen yet, and carrying the food home always outscored cooking it, so goals flipped back and forth. Cooks carrying something raw now always head for the fire, and raw fish goes to a fire, not to a home where it was dropped and wasted.",
+        "Anyone can now light a campfire when they're cold, stressed or out at night. A cook's fire burns the full length; anyone else's burns 35–60% as long, depending on how industrious they are. Bringing a log adds fuel."
+      ]
+    },
+    {
+      "n": 3,
+      "commit": "5b399c2",
+      "date": "2026-04-16",
+      "title": "Frustration clears the way",
+      "notes": [
+        "Bots notice when they're stuck. The longer they fail to make progress, the more frustrated they get, until any bot, toolmaker or not, starts tearing at the tree or rock in its way.",
+        "Brave, industrious bots lose patience sooner. Bare hands are slow and costly (energy, mood, stress); with an axe it's quick. Rocks can now be broken for the first time and leave stone you can carry. Before, they blocked the way forever."
+      ]
+    },
+    {
+      "n": 4,
+      "commit": "01b9457",
+      "date": "2026-04-17",
+      "title": "Teach the tiles, not the bots",
+      "notes": [
+        "About fifteen hard-coded checks scattered through the AI were replaced by properties on the tiles and items themselves: what they're worth as food, whether they can be cooked and into what, whether they can be carried, how hard they are to clear.",
+        "Adding a new food or obstacle now means adding one entry in world.rs, and the bots figure out the rest. Behaviour is meant to be unchanged; this is groundwork."
+      ]
+    },
+    {
+      "n": 5,
+      "commit": "5e8a735",
+      "date": "2026-04-17",
+      "title": "The documentary camera",
+      "notes": [
+        "Leave the page alone for 18 seconds and the camera takes over: it zooms in and pans between whatever is most interesting (bots with something to say, pairs deep in conversation, crowds around a fire, cooking and crafting), staying on each for 7 seconds, with an occasional wide shot. Touch anything and you're back in control.",
+        "The stats moved below the canvas. A same-night follow-up made the camera work on phones by moving the view with CSS transforms instead of scrolling (commits 426fa65 + 5e8a735)."
+      ],
+      "known": [
+        "Same seed doesn't give the same world: the fire and decay passes walk HashMaps in random order.",
+        "A forest tile can mature into a tree under a bot standing on it, trapping the bot.",
+        "No births: the population only ever shrinks. Berries never rot, and stockpiles reach hundreds.",
+        "Jobs are fixed at birth, so when the last toolmaker dies, nobody chops trees again."
+      ]
+    }
+  ]
+}

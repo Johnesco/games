@@ -25,23 +25,14 @@ html, body {
 }
 
 .topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
   padding: 16px 20px 8px;
   border-bottom: 1px solid var(--line);
 }
-
-.topbar {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-}
-
-.build-tag {
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: var(--text-dim);
-  text-decoration: none;
-}
-.build-tag:hover { color: var(--accent-2); }
 
 .topbar h1 {
   margin: 0;
@@ -53,10 +44,10 @@ html, body {
 
 .stats {
   color: var(--text-dim);
-  font-size: 11px;
-  line-height: 1.8;
-  margin-top: 10px;
-  max-width: 600px;
+  font-size: 12px;
+  line-height: 1.7;
+  flex: 1 1 auto;
+  text-align: right;
 }
 
 .layout {
@@ -97,9 +88,10 @@ html, body {
   }
   .topbar {
     padding: 8px 6px 4px;
+    gap: 8px;
   }
   .topbar h1 { font-size: 14px; letter-spacing: 3px; }
-  .stats { font-size: 9px; line-height: 1.5; max-width: 100%; }
+  .stats { font-size: 10px; line-height: 1.5; }
   .toolbar { max-width: 100%; }
   .toolbar button { padding: 5px 8px; font-size: 11px; }
   .hint { display: none; }
@@ -141,10 +133,6 @@ html, body {
   position: relative;
   /* width/height set inline via JS based on zoom */
   transform-origin: top left;
-}
-
-.world-view.idle-cam {
-  transition: transform 1200ms ease-in-out;
 }
 
 canvas#world {

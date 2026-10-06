@@ -29,20 +29,6 @@ html, body {
   border-bottom: 1px solid var(--line);
 }
 
-.topbar {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-}
-
-.build-tag {
-  font-size: 11px;
-  letter-spacing: 1px;
-  color: var(--text-dim);
-  text-decoration: none;
-}
-.build-tag:hover { color: var(--accent-2); }
-
 .topbar h1 {
   margin: 0;
   font-size: 18px;

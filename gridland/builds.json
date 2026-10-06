@@ -1,0 +1,761 @@
+{
+  "builds": [
+    {
+      "n": 1,
+      "commit": "3fd6de3",
+      "date": "2026-04-16",
+      "title": "A village in a box",
+      "notes": [
+        "Day one, already big. 24 bots in a 64×64 tile world, written in Rust and compiled to WebAssembly, with every pixel pushed into a canvas by hand.",
+        "Each bot has 8 drives (hunger, energy, social, boredom, mood, thirst, stress, warmth), 5 personality traits and one of 12 jobs. Each tick it scores 19 possible goals and picks the most pressing, with a little stickiness so it doesn't flip-flop.",
+        "The world already has farming, fishing, cooking, crafting stone axes, hauling, friendships and grudges, moods that spread, paths worn into the grass, campfires that burn down, rain, day and night, and graves."
+      ],
+      "known": [
+        "The cooking chain never fires: \"cooked\" stays at 0 for the whole run."
+      ],
+      "play": "builds/build-1/",
+      "recovered": true,
+      "probe": {
+        "ticks": 60000,
+        "sample_every": 6000,
+        "mean": {
+          "bots": 16,
+          "homes": 15.3,
+          "berries": 369.3,
+          "trees": 316.7,
+          "fires": 5.3,
+          "complaints": 23.7,
+          "logs_chopped_total": 4.7,
+          "berries_cooked_total": 26,
+          "avg_mood": 1.7
+        },
+        "runs": [
+          {
+            "seed": 1,
+            "population": [
+              24,
+              24,
+              24,
+              21,
+              21,
+              19,
+              17,
+              16,
+              16,
+              16,
+              16
+            ],
+            "berries": [
+              57,
+              71,
+              99,
+              138,
+              191,
+              217,
+              256,
+              299,
+              332,
+              355,
+              375
+            ],
+            "final": {
+              "bots": 16,
+              "homes": 17,
+              "berries": 375,
+              "trees": 317,
+              "fires": 9,
+              "complaints": 24,
+              "logs_chopped_total": 0,
+              "berries_cooked_total": 36,
+              "avg_mood": 0
+            }
+          },
+          {
+            "seed": 42,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              22,
+              19,
+              16,
+              16,
+              15,
+              15,
+              15
+            ],
+            "berries": [
+              86,
+              112,
+              156,
+              226,
+              279,
+              318,
+              342,
+              376,
+              407,
+              425,
+              464
+            ],
+            "final": {
+              "bots": 15,
+              "homes": 14,
+              "berries": 464,
+              "trees": 340,
+              "fires": 4,
+              "complaints": 24,
+              "logs_chopped_total": 14,
+              "berries_cooked_total": 19,
+              "avg_mood": 2.9
+            }
+          },
+          {
+            "seed": 777,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              21,
+              21,
+              20,
+              20,
+              19,
+              18,
+              17
+            ],
+            "berries": [
+              74,
+              90,
+              117,
+              135,
+              164,
+              183,
+              196,
+              221,
+              237,
+              248,
+              269
+            ],
+            "final": {
+              "bots": 17,
+              "homes": 15,
+              "berries": 269,
+              "trees": 293,
+              "fires": 3,
+              "complaints": 23,
+              "logs_chopped_total": 0,
+              "berries_cooked_total": 23,
+              "avg_mood": 2.2
+            }
+          }
+        ]
+      }
+    },
+    {
+      "n": 2,
+      "commit": "8a59bd2",
+      "date": "2026-04-16",
+      "title": "Somebody finally cooks dinner",
+      "notes": [
+        "Cooking was dead: cooks wouldn't head for a fire they hadn't seen yet, and carrying the food home always outscored cooking it, so goals flipped back and forth. Cooks carrying something raw now always head for the fire, and raw fish goes to a fire, not to a home where it was dropped and wasted.",
+        "Anyone can now light a campfire when they're cold, stressed or out at night. A cook's fire burns the full length; anyone else's burns 35–60% as long, depending on how industrious they are. Bringing a log adds fuel."
+      ],
+      "play": "builds/build-2/",
+      "recovered": true,
+      "probe": {
+        "ticks": 60000,
+        "sample_every": 6000,
+        "mean": {
+          "bots": 15,
+          "homes": 14.7,
+          "berries": 354.7,
+          "trees": 327.3,
+          "fires": 7.3,
+          "complaints": 23.7,
+          "logs_chopped_total": 4.3,
+          "berries_cooked_total": 66.3,
+          "avg_mood": 16.5
+        },
+        "runs": [
+          {
+            "seed": 1,
+            "population": [
+              24,
+              24,
+              24,
+              20,
+              18,
+              16,
+              16,
+              16,
+              15,
+              15,
+              15
+            ],
+            "berries": [
+              57,
+              76,
+              103,
+              130,
+              169,
+              191,
+              224,
+              245,
+              269,
+              317,
+              339
+            ],
+            "final": {
+              "bots": 15,
+              "homes": 17,
+              "berries": 339,
+              "trees": 330,
+              "fires": 11,
+              "complaints": 24,
+              "logs_chopped_total": 0,
+              "berries_cooked_total": 48,
+              "avg_mood": 29.7
+            }
+          },
+          {
+            "seed": 42,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              23,
+              21,
+              19,
+              18,
+              17,
+              17,
+              15
+            ],
+            "berries": [
+              86,
+              110,
+              140,
+              177,
+              224,
+              267,
+              303,
+              332,
+              359,
+              392,
+              433
+            ],
+            "final": {
+              "bots": 15,
+              "homes": 14,
+              "berries": 433,
+              "trees": 328,
+              "fires": 4,
+              "complaints": 23,
+              "logs_chopped_total": 13,
+              "berries_cooked_total": 101,
+              "avg_mood": 14.2
+            }
+          },
+          {
+            "seed": 777,
+            "population": [
+              24,
+              24,
+              24,
+              22,
+              22,
+              20,
+              19,
+              18,
+              15,
+              15,
+              15
+            ],
+            "berries": [
+              74,
+              87,
+              121,
+              140,
+              160,
+              179,
+              204,
+              224,
+              244,
+              262,
+              292
+            ],
+            "final": {
+              "bots": 15,
+              "homes": 13,
+              "berries": 292,
+              "trees": 324,
+              "fires": 7,
+              "complaints": 24,
+              "logs_chopped_total": 0,
+              "berries_cooked_total": 50,
+              "avg_mood": 5.7
+            }
+          }
+        ]
+      }
+    },
+    {
+      "n": 3,
+      "commit": "5b399c2",
+      "date": "2026-04-16",
+      "title": "Frustration clears the way",
+      "notes": [
+        "Bots notice when they're stuck. The longer they fail to make progress, the more frustrated they get, until any bot, toolmaker or not, starts tearing at the tree or rock in its way.",
+        "Brave, industrious bots lose patience sooner. Bare hands are slow and costly (energy, mood, stress); with an axe it's quick. Rocks can now be broken for the first time and leave stone you can carry. Before, they blocked the way forever."
+      ],
+      "play": "builds/build-3/",
+      "recovered": true,
+      "probe": {
+        "ticks": 60000,
+        "sample_every": 6000,
+        "mean": {
+          "bots": 18.7,
+          "homes": 14.7,
+          "berries": 361.3,
+          "trees": 303.3,
+          "fires": 5,
+          "complaints": 20,
+          "logs_chopped_total": 43,
+          "berries_cooked_total": 77.3,
+          "avg_mood": 13
+        },
+        "runs": [
+          {
+            "seed": 1,
+            "population": [
+              24,
+              24,
+              24,
+              21,
+              20,
+              19,
+              17,
+              16,
+              15,
+              15,
+              15
+            ],
+            "berries": [
+              57,
+              80,
+              111,
+              144,
+              173,
+              211,
+              239,
+              271,
+              297,
+              330,
+              366
+            ],
+            "final": {
+              "bots": 15,
+              "homes": 17,
+              "berries": 366,
+              "trees": 306,
+              "fires": 4,
+              "complaints": 19,
+              "logs_chopped_total": 22,
+              "berries_cooked_total": 84,
+              "avg_mood": 5.2
+            }
+          },
+          {
+            "seed": 42,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              23,
+              22,
+              22,
+              22,
+              22,
+              22,
+              22
+            ],
+            "berries": [
+              86,
+              102,
+              133,
+              166,
+              214,
+              262,
+              302,
+              351,
+              372,
+              396,
+              432
+            ],
+            "final": {
+              "bots": 22,
+              "homes": 14,
+              "berries": 432,
+              "trees": 315,
+              "fires": 6,
+              "complaints": 19,
+              "logs_chopped_total": 73,
+              "berries_cooked_total": 86,
+              "avg_mood": 14.7
+            }
+          },
+          {
+            "seed": 777,
+            "population": [
+              24,
+              24,
+              24,
+              24,
+              24,
+              24,
+              23,
+              22,
+              19,
+              19,
+              19
+            ],
+            "berries": [
+              74,
+              87,
+              106,
+              145,
+              159,
+              189,
+              211,
+              238,
+              255,
+              264,
+              286
+            ],
+            "final": {
+              "bots": 19,
+              "homes": 13,
+              "berries": 286,
+              "trees": 289,
+              "fires": 5,
+              "complaints": 22,
+              "logs_chopped_total": 34,
+              "berries_cooked_total": 62,
+              "avg_mood": 19.1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "n": 4,
+      "commit": "01b9457",
+      "date": "2026-04-17",
+      "title": "Teach the tiles, not the bots",
+      "notes": [
+        "About fifteen hard-coded checks scattered through the AI were replaced by properties on the tiles and items themselves: what they're worth as food, whether they can be cooked and into what, whether they can be carried, how hard they are to clear.",
+        "Adding a new food or obstacle now means adding one entry in world.rs, and the bots figure out the rest. Behaviour is meant to be unchanged; this is groundwork."
+      ],
+      "play": "builds/build-4/",
+      "recovered": true,
+      "probe": {
+        "ticks": 60000,
+        "sample_every": 6000,
+        "mean": {
+          "bots": 18,
+          "homes": 14.7,
+          "berries": 367.7,
+          "trees": 317.7,
+          "fires": 7.3,
+          "complaints": 21.3,
+          "logs_chopped_total": 23,
+          "berries_cooked_total": 68,
+          "avg_mood": 23.9
+        },
+        "runs": [
+          {
+            "seed": 1,
+            "population": [
+              24,
+              24,
+              24,
+              22,
+              21,
+              20,
+              20,
+              19,
+              19,
+              19,
+              19
+            ],
+            "berries": [
+              57,
+              78,
+              107,
+              157,
+              181,
+              237,
+              252,
+              286,
+              321,
+              341,
+              355
+            ],
+            "final": {
+              "bots": 19,
+              "homes": 16,
+              "berries": 355,
+              "trees": 319,
+              "fires": 7,
+              "complaints": 22,
+              "logs_chopped_total": 20,
+              "berries_cooked_total": 86,
+              "avg_mood": 13.9
+            }
+          },
+          {
+            "seed": 42,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              23,
+              22,
+              22,
+              20,
+              19,
+              19,
+              19
+            ],
+            "berries": [
+              86,
+              106,
+              132,
+              178,
+              228,
+              281,
+              329,
+              361,
+              389,
+              407,
+              445
+            ],
+            "final": {
+              "bots": 19,
+              "homes": 14,
+              "berries": 445,
+              "trees": 340,
+              "fires": 8,
+              "complaints": 19,
+              "logs_chopped_total": 24,
+              "berries_cooked_total": 71,
+              "avg_mood": 25.6
+            }
+          },
+          {
+            "seed": 777,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              21,
+              19,
+              19,
+              19,
+              17,
+              16,
+              16
+            ],
+            "berries": [
+              74,
+              87,
+              114,
+              139,
+              168,
+              200,
+              227,
+              263,
+              278,
+              292,
+              303
+            ],
+            "final": {
+              "bots": 16,
+              "homes": 14,
+              "berries": 303,
+              "trees": 294,
+              "fires": 7,
+              "complaints": 23,
+              "logs_chopped_total": 25,
+              "berries_cooked_total": 47,
+              "avg_mood": 32.1
+            }
+          }
+        ]
+      }
+    },
+    {
+      "n": 5,
+      "commit": "5e8a735",
+      "date": "2026-04-17",
+      "title": "The documentary camera",
+      "notes": [
+        "Leave the page alone for 18 seconds and the camera takes over: it zooms in and pans between whatever is most interesting (bots with something to say, pairs deep in conversation, crowds around a fire, cooking and crafting), staying on each for 7 seconds, with an occasional wide shot. Touch anything and you're back in control.",
+        "The stats moved below the canvas. A same-night follow-up made the camera work on phones by moving the view with CSS transforms instead of scrolling (commits 426fa65 + 5e8a735)."
+      ],
+      "known": [
+        "Same seed doesn't give the same world: the fire and decay passes walk HashMaps in random order.",
+        "A forest tile can mature into a tree under a bot standing on it, trapping the bot.",
+        "No births: the population only ever shrinks. Berries never rot, and stockpiles reach hundreds.",
+        "Jobs are fixed at birth, so when the last toolmaker dies, nobody chops trees again."
+      ],
+      "play": "builds/build-5/",
+      "recovered": true,
+      "probe": {
+        "ticks": 60000,
+        "sample_every": 6000,
+        "mean": {
+          "bots": 19,
+          "homes": 15.3,
+          "berries": 333.7,
+          "trees": 316,
+          "fires": 12,
+          "complaints": 22.7,
+          "logs_chopped_total": 26.7,
+          "berries_cooked_total": 81.7,
+          "avg_mood": 16.4
+        },
+        "runs": [
+          {
+            "seed": 1,
+            "population": [
+              24,
+              24,
+              24,
+              22,
+              21,
+              21,
+              20,
+              20,
+              20,
+              20,
+              20
+            ],
+            "berries": [
+              57,
+              78,
+              105,
+              146,
+              194,
+              231,
+              268,
+              290,
+              313,
+              340,
+              367
+            ],
+            "final": {
+              "bots": 20,
+              "homes": 18,
+              "berries": 367,
+              "trees": 342,
+              "fires": 10,
+              "complaints": 24,
+              "logs_chopped_total": 21,
+              "berries_cooked_total": 71,
+              "avg_mood": 13
+            }
+          },
+          {
+            "seed": 42,
+            "population": [
+              24,
+              24,
+              24,
+              23,
+              21,
+              20,
+              20,
+              20,
+              20,
+              19,
+              19
+            ],
+            "berries": [
+              86,
+              104,
+              142,
+              187,
+              233,
+              267,
+              296,
+              325,
+              355,
+              374,
+              400
+            ],
+            "final": {
+              "bots": 19,
+              "homes": 14,
+              "berries": 400,
+              "trees": 322,
+              "fires": 13,
+              "complaints": 21,
+              "logs_chopped_total": 26,
+              "berries_cooked_total": 90,
+              "avg_mood": 17
+            }
+          },
+          {
+            "seed": 777,
+            "population": [
+              24,
+              24,
+              24,
+              24,
+              24,
+              23,
+              23,
+              22,
+              21,
+              18,
+              18
+            ],
+            "berries": [
+              74,
+              86,
+              108,
+              128,
+              136,
+              151,
+              170,
+              188,
+              202,
+              222,
+              234
+            ],
+            "final": {
+              "bots": 18,
+              "homes": 14,
+              "berries": 234,
+              "trees": 284,
+              "fires": 13,
+              "complaints": 23,
+              "logs_chopped_total": 33,
+              "berries_cooked_total": 84,
+              "avg_mood": 19.1
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "latest": 5,
+  "generated": "2026-10-06"
+}

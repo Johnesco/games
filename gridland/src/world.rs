@@ -974,3 +974,35 @@ fn sample(grid: &[f32], x: usize, y: usize) -> f32 {
     let cd = c + (d - c) * sx;
     ab + (cd - ab) * sy
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every living bot stays inside the map, and on a walkable tile.
+    /// KNOWN FAILURE (found build 5): Forest matures into Tree under a
+    /// standing bot (step_environment), trapping it. Un-ignore once fixed.
+    #[test]
+    #[ignore = "known bug: Forest->Tree under a standing bot"]
+    fn bots_stay_in_bounds_and_on_walkable_tiles() {
+        for seed in [1u64, 42, 777] {
+            let mut w = World::new(seed);
+            for _ in 0..20_000 {
+                w.step();
+                for b in w.bots.iter().filter(|b| b.alive) {
+                    assert!(
+                        b.x >= 0 && b.y >= 0 && b.x < W as i32 && b.y < H as i32,
+                        "seed {seed} tick {}: {} out of bounds at ({},{})",
+                        w.tick, b.name, b.x, b.y
+                    );
+                    let t = w.tile(b.x, b.y);
+                    assert!(
+                        t.walkable(),
+                        "seed {seed} tick {}: {} standing on {:?} at ({},{})",
+                        w.tick, b.name, t, b.x, b.y
+                    );
+                }
+            }
+        }
+    }
+}
