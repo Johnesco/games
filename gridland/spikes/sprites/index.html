@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gridland Sprite Spike</title>
+  <style>
+    :root {
+      --bg: #11151b; --panel: #1a2028; --line: #2e3845; --text: #d8e1ea; --dim: #8a96a4;
+      --accent: #8ad0ff; --accent-2: #ffc26b;
+      --mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 13px/1.6 var(--mono); }
+    .wrap { max-width: 1640px; margin: 0 auto; padding: 24px 16px 64px; }
+    h1 { margin: 0; font-size: 20px; letter-spacing: 6px; color: var(--accent); }
+    .sub { color: var(--dim); margin: 4px 0 16px; max-width: 900px; }
+    .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 24px; position: sticky; top: 0; background: var(--bg); padding: 8px 0; z-index: 2; border-bottom: 1px solid var(--line); }
+    button { font: inherit; color: var(--text); background: var(--panel); border: 1px solid var(--line); padding: 5px 12px; cursor: pointer; }
+    button.on { border-color: var(--accent); color: var(--accent); }
+    .seed { color: var(--dim); font-size: 12px; }
+    section { margin-bottom: 36px; }
+    h2 { font-size: 14px; letter-spacing: 2px; color: var(--accent-2); margin: 0 0 4px; }
+    .note { color: var(--dim); margin: 0 0 12px; max-width: 900px; }
+    .cmp { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 780px), 1fr)); gap: 20px; }
+    .col { background: var(--panel); border: 1px solid var(--line); padding: 12px; overflow-x: auto; }
+    .col h3 { margin: 0 0 8px; font-size: 12px; color: var(--dim); letter-spacing: 1px; font-weight: 400; }
+    .col h3 b { color: var(--text); }
+    canvas { image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+    .labels { display: flex; color: var(--dim); font-size: 10px; margin-top: 4px; }
+    .labels span { width: 64px; flex: 0 0 64px; text-align: center; overflow: hidden; }
+    .row + .row { margin-top: 14px; }
+    .actual { display: flex; gap: 16px; align-items: flex-end; margin-top: 12px; flex-wrap: wrap; }
+    .actual div { color: var(--dim); font-size: 11px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>SPRITE SPIKE</h1>
+    <p class="sub">Every pixel here is drawn by code (docs/ART.md). Characters come from inherited genes (skin, hair, eyes,
+      hairstyle, build), plus age, job and mood. Each pair of panels shows the same thing at <b>16 px</b> and <b>32 px</b>
+      per tile, scaled to the same on-screen size (64 px per tile), so you're comparing detail, not size.</p>
+    <div class="bar">
+      <button id="reroll">new family</button>
+      <button id="night">night</button>
+      <button id="anim" class="on">animate</button>
+      <span class="seed" id="seed"></span>
+    </div>
+
+    <section>
+      <h2>THREE GENERATIONS</h2>
+      <p class="note">Grandparent → parent (with a partner) → their three children, shown twice: as children, then grown
+        up. Each child takes each gene from one parent; skin can land between the two.</p>
+      <div class="cmp" id="family"></div>
+    </section>
+
+    <section>
+      <h2>TWELVE JOBS</h2>
+      <p class="note">Clothing colour by job, plus a hat or a held tool for most jobs. Faces and hair are random here.</p>
+      <div class="cmp" id="jobs"></div>
+    </section>
+
+    <section>
+      <h2>MOODS AND WALKING</h2>
+      <p class="note">Happy, neutral, sad, then the two walk frames, for one adult, one child and one elder.</p>
+      <div class="cmp" id="moods"></div>
+    </section>
+
+    <section>
+      <h2>A CORNER OF THE VILLAGE</h2>
+      <p class="note">Shoreline foam, path edges blending into grass, trees and roofs overlapping the tile above, drawn
+        in depth order. Night uses a light map multiplied over the scene, the approach the new renderer would take. The
+        small images are the true 1× size.</p>
+      <div class="cmp" id="scene"></div>
+    </section>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
