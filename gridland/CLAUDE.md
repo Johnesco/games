@@ -14,6 +14,7 @@ Rust → WebAssembly village sim, served from `master` by GitHub Pages at
 | `src/` | The sim (Rust). `www/pkg/` is its compiled output, committed so Pages needs no build step. |
 | `tests/sim.rs`, `src/world.rs` `mod tests` | Headless tests: `cargo test --release`. |
 | `examples/probe.rs` | Soak probe: 3 seeds × 60k ticks → periodic `stats()` JSON. Feeds each build's diary numbers. |
+| `docs/PLAYER.md` | **Design direction**: the player as a small god whose power comes from belief; journal, milestones, biographies; saved village that lives on while you're away. Check features against it. |
 | `tools/cut.mjs` | Build pipeline (below). `tools/history.json` holds the notes for builds 1–5, which were recovered from git. |
 
 ## The loop
@@ -44,3 +45,7 @@ When cutting, fold these into the diary notes.
   `HashMap`/`HashSet` into sim state. `same_seed_same_world` guards this, and the probe is now byte-identical run to run.
 - **Bots no longer get trapped in trees.** Forest won't mature into Tree under a standing bot
   (`step_environment`). `bots_stay_in_bounds_and_on_walkable_tiles` guards this.
+- **Same speed on every screen.** Sim ticks run on a fixed timestep against real time (`TICKS_PER_SEC` = 60 per 1×
+  in `www/main.js`), not once per animation frame; a 144 Hz monitor used to run the world 2.4× faster. Checked by
+  driving the loop with synthetic 144 / 60 / 30 Hz frames: 120 ticks per second at 2× each time. Frame gaps over
+  250 ms are dropped until the away/catch-up model exists (docs/PLAYER.md).

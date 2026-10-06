@@ -18,6 +18,17 @@ let baseW = 512;
 let baseH = 512;
 let tileSizeCss = 8; // css pixels per tile at current zoom
 
+// --- Activity clock ---
+// Sim ticks run on a fixed timestep against real time, not once per animation
+// frame — otherwise a 144 Hz monitor runs the world 2.4× faster than a 60 Hz one.
+// 60 ticks/s at 1× is the rate the sim was tuned at (on 60 Hz screens).
+const TICKS_PER_SEC = 60;
+// Longest real-time gap one frame may simulate. Bigger gaps (a hidden tab, a
+// stall) are dropped for now; the away/catch-up model will own them later.
+const MAX_FRAME_MS = 250;
+let tickAccum = 0;     // fractional ticks owed, carried between frames
+let lastFrameMs = null;
+
 // --- Idle camera (documentary mode) ---
 const IDLE_TIMEOUT_MS = 18000;   // 18s of no interaction → enter idle
 const IDLE_HOLD_MS = 7000;       // hold on each subject 7s
@@ -371,9 +382,14 @@ function idlePickNext() {
   idleHoldTimer = setTimeout(idlePickNext, IDLE_HOLD_MS);
 }
 
-function loop() {
+function loop(now) {
+  const dt = lastFrameMs === null ? 0 : Math.min(now - lastFrameMs, MAX_FRAME_MS);
+  lastFrameMs = now;
   if (world) {
-    for (let i = 0; i < speed; i++) world.tick();
+    tickAccum += (dt / 1000) * TICKS_PER_SEC * speed;
+    const ticks = Math.floor(tickAccum);
+    tickAccum -= ticks;
+    for (let i = 0; i < ticks; i++) world.tick();
     world.render();
     const ptr = world.buffer_ptr();
     const len = world.buffer_len();
